@@ -21,6 +21,9 @@ type Stream interface {
 
 	// Swarm returns the Swarm asociated with this Stream
 	Swarm() *Swarm
+
+	// Write writes bytes to a stream, calling write data for each call.
+	Wait() error
 }
 
 type stream struct {
@@ -46,14 +49,19 @@ func (s *stream) Swarm() *Swarm {
 	return s.conn.swarm
 }
 
+// Write writes bytes to a stream, calling write data for each call.
+func (s *stream) Wait() error {
+	return s.ssStream.Wait()
+}
+
 func (s *stream) Read(p []byte) (n int, err error) {
-	panic("nyi")
+	return s.ssStream.Read(p)
 }
 
 func (s *stream) Write(p []byte) (n int, err error) {
-	panic("nyi")
+	return s.ssStream.Write(p)
 }
 
 func (s *stream) Close() error {
-	panic("nyi")
+	return s.conn.swarm.removeStream(s)
 }

@@ -33,13 +33,27 @@ type Swarm struct {
 	streamHandler StreamHandler
 }
 
+func NewSwarm() *Swarm {
+	return &Swarm{
+		streams:       map[*stream]struct{}{},
+		conns:         map[*Conn]struct{}{},
+		listeners:     map[*Listener]struct{}{},
+		selectConn:    SelectRandomConn,
+		streamHandler: CloseHandler,
+	}
+}
+
 // SetStreamHandler assigns the stream handler in the swarm.
 // The handler assumes responsibility for closing the stream.
 // This need not happen at the end of the handler, leaving the
 // stream open (to be used and closed later) is fine.
 // It is also fine to keep a pointer to the Stream.
+// If handler is nil, will use CloseHandler
 // This is a threadsafe (atomic) operation
 func (s *Swarm) SetStreamHandler(sh StreamHandler) {
+	if sh == nil {
+		sh = CloseHandler
+	}
 	atomic.SwapPointer((*unsafe.Pointer)(unsafe.Pointer(&s.streamHandler)), unsafe.Pointer(&sh))
 }
 
@@ -51,8 +65,12 @@ func (s *Swarm) StreamHandler() StreamHandler {
 }
 
 // SetConnSelect assigns the connection selector in the swarm.
+// If cs is nil, will use SelectRandomConn
 // This is a threadsafe (atomic) operation
 func (s *Swarm) SetSelectConn(cs SelectConn) {
+	if cs == nil {
+		cs = SelectRandomConn
+	}
 	atomic.SwapPointer((*unsafe.Pointer)(unsafe.Pointer(&s.selectConn)), unsafe.Pointer(&cs))
 }
 
@@ -132,6 +150,10 @@ func (s *Swarm) newStreamSelectConn(selConn SelectConn, conns []*Conn) (Stream, 
 // NewStreamWithSelectConn opens a new Stream on a connection selected
 // by selConn.
 func (s *Swarm) NewStreamSelectConn(selConn SelectConn) (Stream, error) {
+	if selConn == nil {
+		return nil, errors.New("nil SelectConn")
+	}
+
 	conns := s.Conns()
 	if len(conns) == 0 {
 		return nil, ErrNoConnections
@@ -175,7 +197,18 @@ func (s *Swarm) NewStreamWithConn(conn *Conn) (Stream, error) {
 	return s.createStream(conn)
 }
 
+// AddConnToGroup assigns given Group to conn
+func (s *Swarm) AddConnToGroup(conn *Conn, g Group) {
+	conn.groups.Add(g)
+}
+
 // ConnsWithGroup returns all the connections with a given Group
 func (s *Swarm) ConnsWithGroup(g Group) []*Conn {
 	return ConnsWithGroup(g, s.Conns())
+}
+
+// Close shuts down the Swarm, and it's listeners.
+func (s *Swarm) Close() error {
+	// shut down TODO
+	return nil
 }

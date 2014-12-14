@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"sync"
 
 	ss "github.com/docker/spdystream"
 )
@@ -29,9 +30,11 @@ type Conn struct {
 	ssConn  *ss.Connection
 	netConn net.Conn // underlying connection
 
-	swarm   *Swarm
-	streams map[*stream]struct{}
-	groups  groupSet
+	swarm  *Swarm
+	groups groupSet
+
+	streams    map[*stream]struct{}
+	streamLock sync.RWMutex
 }
 
 func newConn(nconn net.Conn, sconn *ss.Connection, s *Swarm) *Conn {
@@ -147,9 +150,27 @@ func (s *Swarm) setupSSStream(ssS *ss.Stream, c *Conn) *stream {
 	// create a new *stream
 	stream := newStream(ssS, c)
 
+	// add it to our streams maps
+
 	// add it to our map
 	s.streamLock.Lock()
+	c.streamLock.Lock()
 	s.streams[stream] = struct{}{}
+	c.streams[stream] = struct{}{}
 	s.streamLock.Unlock()
+	c.streamLock.Unlock()
 	return stream
+}
+
+func (s *Swarm) removeStream(stream *stream) error {
+
+	// remove from our maps
+	s.streamLock.Lock()
+	stream.conn.streamLock.Lock()
+	delete(s.streams, stream)
+	delete(stream.conn.streams, stream)
+	s.streamLock.Unlock()
+	stream.conn.streamLock.Unlock()
+
+	return stream.ssStream.Close()
 }
