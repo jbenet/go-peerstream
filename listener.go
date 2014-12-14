@@ -106,9 +106,9 @@ func (l *Listener) Close() error {
 }
 
 // addListener is the internal version of AddListener.
-func (s *Swarm) addListener(nl net.Listener) error {
+func (s *Swarm) addListener(nl net.Listener) (*Listener, error) {
 	if nl == nil {
-		return errors.New("nil listener")
+		return nil, errors.New("nil listener")
 	}
 
 	s.listenerLock.Lock()
@@ -117,12 +117,12 @@ func (s *Swarm) addListener(nl net.Listener) error {
 	// first, check if we already have it...
 	for l := range s.listeners {
 		if l.netList == nl {
-			return nil
+			return l, nil
 		}
 	}
 
 	l := newListener(nl, s)
 	s.listeners[l] = struct{}{}
 	go l.accept()
-	return nil
+	return l, nil
 }

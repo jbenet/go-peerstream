@@ -31,10 +31,10 @@ func main() {
 
 	// tell swarm to accept incoming connections on these
 	// listeners. Swarm will start accepting new connections.
-	if err := swarm.AddListener(l1); err != nil {
+	if _, err := swarm.AddListener(l1); err != nil {
 		panic(err)
 	}
-	if err := swarm.AddListener(l2); err != nil {
+	if _, err := swarm.AddListener(l2); err != nil {
 		panic(err)
 	}
 

@@ -124,7 +124,7 @@ func (s *Swarm) Streams() []Stream {
 
 // AddListener adds net.Listener to the Swarm, and immediately begins
 // accepting incoming connections.
-func (s *Swarm) AddListener(l net.Listener) error {
+func (s *Swarm) AddListener(l net.Listener) (*Listener, error) {
 	return s.addListener(l)
 }
 
