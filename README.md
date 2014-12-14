@@ -11,7 +11,7 @@ connections to many hosts. It tried to simplify the complexity of:
 * handling stream multiplexing (we use SPDY, but maybe QUIC some day)
 * providing a **simple** interface to the user
 
-### Godoc: https://github.com/jbenet/go-peerstream
+### Godoc: https://godoc.org/github.com/jbenet/go-peerstream
 
 ---
 
