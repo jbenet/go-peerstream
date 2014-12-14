@@ -35,9 +35,9 @@ type Swarm struct {
 
 func NewSwarm() *Swarm {
 	return &Swarm{
-		streams:       map[*stream]struct{}{},
-		conns:         map[*Conn]struct{}{},
-		listeners:     map[*Listener]struct{}{},
+		streams:       make(map[*stream]struct{}),
+		conns:         make(map[*Conn]struct{}),
+		listeners:     make(map[*Listener]struct{}),
 		selectConn:    SelectRandomConn,
 		streamHandler: CloseHandler,
 	}

@@ -73,6 +73,7 @@ func (l *Listener) accept() {
 		tempDelay = 0
 
 		// add conn to swarm and listen for incoming streams
+		// log.Printf("accepted conn %s\n", conn.RemoteAddr())
 		conn2, err := l.swarm.addConn(conn, true)
 		if err != nil {
 			l.acceptErr <- err

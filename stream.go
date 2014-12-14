@@ -34,9 +34,18 @@ type stream struct {
 }
 
 func newStream(ssS *ss.Stream, c *Conn) *stream {
-	s := &stream{conn: c, ssStream: ssS}
+	s := &stream{
+		conn:     c,
+		ssStream: ssS,
+		groups:   groupSet{m: make(map[Group]struct{})},
+	}
 	s.groups.AddSet(&c.groups) // inherit groups
 	return s
+}
+
+// SPDYStream returns the underlying *spdystream.Stream
+func (s *stream) SPDYStream() *ss.Stream {
+	return s.ssStream
 }
 
 // Conn returns the Conn associated with this Stream

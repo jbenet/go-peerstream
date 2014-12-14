@@ -42,7 +42,8 @@ func newConn(nconn net.Conn, sconn *ss.Connection, s *Swarm) *Conn {
 		netConn: nconn,
 		ssConn:  sconn,
 		swarm:   s,
-		streams: map[*stream]struct{}{},
+		groups:  groupSet{m: make(map[Group]struct{})},
+		streams: make(map[*stream]struct{}),
 	}
 }
 
@@ -123,6 +124,8 @@ func (s *Swarm) addConn(netConn net.Conn, server bool) (*Conn, error) {
 
 	// go listen for incoming streams on this connection
 	go c.ssConn.Serve(func(ssS *ss.Stream) {
+		// log.Printf("accepted stream %d from %s\n", ssS.Identifier(), netConn.RemoteAddr())
+		ssS.SendReply(http.Header{}, false)
 		stream := s.setupSSStream(ssS, c)
 		s.StreamHandler()(stream) // call our handler
 	})
