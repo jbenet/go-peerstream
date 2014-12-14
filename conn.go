@@ -72,6 +72,11 @@ func (c *Conn) SPDYConn() *ss.Connection {
 	return c.ssConn
 }
 
+// AddGroup assigns given Group to conn
+func (c *Conn) AddGroup(g Group) {
+	c.groups.Add(g)
+}
+
 // Stream returns a stream associated with this Conn
 func (c *Conn) NewStream() (Stream, error) {
 	return c.swarm.NewStreamWithConn(c)
