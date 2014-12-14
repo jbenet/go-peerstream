@@ -29,8 +29,17 @@ type Conn struct {
 	netConn net.Conn // underlying connection
 
 	swarm   *Swarm
-	streams map[fd]*stream
+	streams map[*stream]struct{}
 	groups  groupSet
+}
+
+func newConn(nconn net.Conn, sconn *ss.Connection, s *Swarm) *Conn {
+	return &Conn{
+		netConn: nconn,
+		ssConn:  sconn,
+		swarm:   s,
+		streams: map[*stream]struct{}{},
+	}
 }
 
 // Swarm returns the Swarm associated with this Conn
