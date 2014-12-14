@@ -9,6 +9,15 @@ import (
 	ss "github.com/docker/spdystream"
 )
 
+// ConnHandler is a function which receives a Conn. It allows
+// clients to set a function to receive newly accepted
+// connections. It works like StreamHandler, but is usually
+// less useful than usual as most services will only use
+// Streams. It is safe to pass or store the *Conn elsewhere.
+// Note: the ConnHandler is called sequentially, so spawn
+// goroutines or pass the Conn. See EchoHandler.
+type ConnHandler func(s *Conn)
+
 // SelectConn selects a connection out of list. It allows
 // delegation of decision making to clients. Clients can
 // make SelectConn functons that check things connection
@@ -126,25 +135,40 @@ func (s *Swarm) addConn(netConn net.Conn, server bool) (*Conn, error) {
 		return nil, errors.New("nil conn")
 	}
 
-	s.connLock.Lock()
-	defer s.connLock.Unlock()
+	// this function is so we can defer our lock, which needs to be
+	// unlocked **before** the Handler is called (which needs to be
+	// sequential). This was the simplest thing :)
+	setupConn := func() (*Conn, error) {
+		s.connLock.Lock()
+		defer s.connLock.Unlock()
 
-	// first, check if we already have it...
-	for c := range s.conns {
-		if c.netConn == netConn {
-			return c, nil
+		// first, check if we already have it...
+		for c := range s.conns {
+			if c.netConn == netConn {
+				s.connLock.Unlock()
+				return c, nil
+			}
 		}
+
+		// create a new spdystream connection
+		ssConn, err := ss.NewConnection(netConn, server)
+		if err != nil {
+			s.connLock.Unlock()
+			return nil, err
+		}
+
+		// add the connection
+		c := newConn(netConn, ssConn, s)
+		s.conns[c] = struct{}{}
+		return c, nil
 	}
 
-	// create a new spdystream connection
-	ssConn, err := ss.NewConnection(netConn, server)
+	c, err := setupConn()
 	if err != nil {
 		return nil, err
 	}
 
-	// add the connection
-	c := newConn(netConn, ssConn, s)
-	s.conns[c] = struct{}{}
+	s.ConnHandler()(c)
 
 	// go listen for incoming streams on this connection
 	go c.ssConn.Serve(func(ssS *ss.Stream) {

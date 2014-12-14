@@ -22,15 +22,12 @@ type Swarm struct {
 	listeners    map[*Listener]struct{}
 	listenerLock sync.RWMutex
 
-	// selectConn is the default SelectConn function
-	selectConn   SelectConn
-	selectConnLk sync.RWMutex
-
-	// streamHandler receives Streams initiated remotely
-	// should be accessed with SetStreamHandler / StreamHandler
+	// these handlers should be accessed with their getter/setter
 	// as this pointer may be changed at any time.
-	streamHandler   StreamHandler
-	streamHandlerLk sync.RWMutex
+	handlerLock   sync.RWMutex  // protects the functions below
+	connHandler   ConnHandler   // receives Conns intiated remotely
+	streamHandler StreamHandler // receives Streams initiated remotely
+	selectConn    SelectConn    // default SelectConn function
 }
 
 func NewSwarm() *Swarm {
@@ -39,7 +36,8 @@ func NewSwarm() *Swarm {
 		conns:         make(map[*Conn]struct{}),
 		listeners:     make(map[*Listener]struct{}),
 		selectConn:    SelectRandomConn,
-		streamHandler: CloseHandler,
+		streamHandler: NoOpStreamHandler,
+		connHandler:   NoOpConnHandler,
 	}
 }
 
@@ -48,39 +46,53 @@ func NewSwarm() *Swarm {
 // This need not happen at the end of the handler, leaving the
 // stream open (to be used and closed later) is fine.
 // It is also fine to keep a pointer to the Stream.
-// If handler is nil, will use CloseHandler
 // This is a threadsafe (atomic) operation
 func (s *Swarm) SetStreamHandler(sh StreamHandler) {
-	if sh == nil {
-		sh = CloseHandler
-	}
-	s.streamHandlerLk.Lock()
-	defer s.streamHandlerLk.Unlock()
+	s.handlerLock.Lock()
+	defer s.handlerLock.Unlock()
 	s.streamHandler = sh
-	// atomic.SwapPointer((*unsafe.Pointer)(unsafe.Pointer(&s.streamHandler)), unsafe.Pointer(&sh))
 }
 
 // StreamHandler returns the Swarm's current StreamHandler.
 // This is a threadsafe (atomic) operation
 func (s *Swarm) StreamHandler() StreamHandler {
-	s.streamHandlerLk.RLock()
-	defer s.streamHandlerLk.RUnlock()
+	s.handlerLock.RLock()
+	defer s.handlerLock.RUnlock()
+	if s.streamHandler == nil {
+		return NoOpStreamHandler
+	}
 	return s.streamHandler
-	// p := atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&s.streamHandler)))
-	// return StreamHandler(*(*StreamHandler)(p))
+}
+
+// SetConnHandler assigns the conn handler in the swarm.
+// Unlike the StreamHandler, the ConnHandler has less respon-
+// ibility for the Connection. The Swarm is still its client.
+// This handler is only a notification.
+// This is a threadsafe (atomic) operation
+func (s *Swarm) SetConnHandler(ch ConnHandler) {
+	s.handlerLock.Lock()
+	defer s.handlerLock.Unlock()
+	s.connHandler = ch
+}
+
+// ConnHandler returns the Swarm's current ConnHandler.
+// This is a threadsafe (atomic) operation
+func (s *Swarm) ConnHandler() ConnHandler {
+	s.handlerLock.RLock()
+	defer s.handlerLock.RUnlock()
+	if s.connHandler == nil {
+		return NoOpConnHandler
+	}
+	return s.connHandler
 }
 
 // SetConnSelect assigns the connection selector in the swarm.
 // If cs is nil, will use SelectRandomConn
 // This is a threadsafe (atomic) operation
 func (s *Swarm) SetSelectConn(cs SelectConn) {
-	if cs == nil {
-		cs = SelectRandomConn
-	}
-	s.selectConnLk.Lock()
-	defer s.selectConnLk.Unlock()
+	s.handlerLock.Lock()
+	defer s.handlerLock.Unlock()
 	s.selectConn = cs
-	// atomic.SwapPointer((*unsafe.Pointer)(unsafe.Pointer(&s.selectConn)), unsafe.Pointer(&cs))
 }
 
 // ConnSelect returns the Swarm's current connection selector.
@@ -88,11 +100,12 @@ func (s *Swarm) SetSelectConn(cs SelectConn) {
 // possible connections. The default chooses one at random.
 // This is a threadsafe (atomic) operation
 func (s *Swarm) SelectConn() SelectConn {
-	s.selectConnLk.RLock()
-	defer s.selectConnLk.RUnlock()
+	s.handlerLock.RLock()
+	defer s.handlerLock.RUnlock()
+	if s.selectConn == nil {
+		return SelectRandomConn
+	}
 	return s.selectConn
-	// p := atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&s.selectConn)))
-	// return SelectConn(*(*SelectConn)(p))
 }
 
 // Conns returns all the connections associated with this Swarm.

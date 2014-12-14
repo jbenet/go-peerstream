@@ -8,7 +8,10 @@ import (
 
 // StreamHandler is a function which receives a Stream. It
 // allows clients to set a function to receive newly created
-// streams. It works sort of like a http.HandleFunc.
+// streams, and decide whether to continue adding them.
+// It works sort of like a http.HandleFunc.
+// Note: the StreamHandler is called sequentially, so spawn
+// goroutines or pass the Stream. See EchoHandler.
 type StreamHandler func(s Stream)
 
 type Stream interface {

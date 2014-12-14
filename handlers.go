@@ -19,3 +19,7 @@ func EchoHandler(s Stream) {
 func CloseHandler(s Stream) {
 	s.Close()
 }
+
+func NoOpStreamHandler(s Stream) {}
+
+func NoOpConnHandler(c *Conn) {}
