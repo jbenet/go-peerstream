@@ -2,6 +2,8 @@ package peerstream
 
 import (
 	"io"
+
+	ss "github.com/docker/spdystream"
 )
 
 // StreamHandler is a function which receives a Stream. It
@@ -15,28 +17,43 @@ type Stream interface {
 	io.Closer
 
 	// Conn returns the Conn associated with this Stream
-	Conn() Conn
+	Conn() *Conn
 
 	// Swarm returns the Swarm asociated with this Stream
-	Swarm() Swarm
-
-	groupable
+	Swarm() *Swarm
 }
 
 type stream struct {
-	groups groupable_
-	conn   *conn
-
-	// spdystream implementation details
 	ssStream *ss.Stream
+
+	conn   *Conn
+	groups groupSet
 }
 
-func newStream(c *conn, ssS *ss.Stream) *stream {
+func newStream(ssS *ss.Stream, c *Conn) *stream {
 	s := &stream{conn: c, ssStream: ssS}
-	s.groups.AddSet(c.groups) // inherit groups
+	s.groups.AddSet(&c.groups) // inherit groups
 	return s
 }
 
-func (s *stream) rawGroupable() groupable_ {
-	return &s.grp
+// Conn returns the Conn associated with this Stream
+func (s *stream) Conn() *Conn {
+	return s.conn
+}
+
+// Swarm returns the Swarm asociated with this Stream
+func (s *stream) Swarm() *Swarm {
+	return s.conn.swarm
+}
+
+func (s *stream) Read(p []byte) (n int, err error) {
+	panic("nyi")
+}
+
+func (s *stream) Write(p []byte) (n int, err error) {
+	panic("nyi")
+}
+
+func (s *stream) Close() error {
+	panic("nyi")
 }

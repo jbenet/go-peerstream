@@ -3,6 +3,7 @@ package peerstream
 import (
 	"errors"
 	"sync"
+	"unsafe"
 )
 
 // ErrGroupNotFound signals no such group exists
@@ -13,47 +14,64 @@ var ErrGroupNotFound = errors.New("group not found")
 // it is meant to work like a KeyType in maps
 type Group interface{}
 
-// groupable_ is a struct designed to be embedded and
+// groupSet is a struct designed to be embedded and
 // give things group memebership
-type groupable_ struct {
-	groups syncMap // map[Group]struct{}
+type groupSet struct {
+	m map[Group]struct{}
+	sync.RWMutex
 }
 
-func (ga *groupable_) Groups() []Group {
-	k := ga.groups.Keys()
+func (gs *groupSet) Add(g Group) {
+	gs.Lock()
+	defer gs.Unlock()
+	gs.m[g] = struct{}{}
+}
 
-	l := make([]Group, len(k))
-	for i, kk := range k {
-		l[i] = kk
+func (gs *groupSet) Remove(g Group) {
+	gs.Lock()
+	defer gs.Unlock()
+	delete(gs.m, g)
+}
+
+func (gs *groupSet) Has(g Group) bool {
+	gs.RLock()
+	defer gs.RUnlock()
+	_, ok := gs.m[g]
+	return ok
+}
+
+func (gs *groupSet) Groups() []Group {
+	gs.RLock()
+	defer gs.RUnlock()
+
+	out := make([]Group, 0, len(gs.m))
+	for k := range gs.m {
+		out = append(out, k)
 	}
-	return l
+	return out
 }
 
-// groupable is an interface for things which use groupables
-type groupable interface {
-	rawGroupable() *groupable_
-}
-
-func grpblsToStreams(gs []*groupable_) []Stream {
-	out := make([]Stream, len(gs))
-	for i, ga := range gs {
-		out[i] = ga
+// AddSet adds all elements in another set.
+func (gs *groupSet) AddSet(gs2 *groupSet) {
+	// acquire locks in order
+	p1 := uintptr(unsafe.Pointer(gs))
+	p2 := uintptr(unsafe.Pointer(gs2))
+	switch {
+	case p1 < p2:
+		gs.Lock()
+		gs2.RLock()
+		defer gs.Unlock()
+		defer gs2.RUnlock()
+	case p1 > p2:
+		gs2.Lock()
+		gs.Lock()
+		defer gs2.Unlock()
+		defer gs.Unlock()
+	default:
+		return // they're the same!
 	}
-	return ga
-}
 
-func grpblsToConns(gs []*groupable_) []Conn {
-	out := make([]Conn, len(gs))
-	for i, ga := range gs {
-		out[i] = ga
+	for g := range gs2.m {
+		gs.m[g] = struct{}{}
 	}
-	return ga
-}
-
-func grpblsToListeners(gs []*groupable_) []Listener {
-	out := make([]Listener, len(gs))
-	for i, ga := range gs {
-		out[i] = ga
-	}
-	return ga
 }
