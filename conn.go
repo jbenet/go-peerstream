@@ -68,6 +68,30 @@ func (c *Conn) NewStream() (Stream, error) {
 	return c.swarm.NewStreamWithConn(c)
 }
 
+func (c *Conn) Streams() []Stream {
+	c.streamLock.RLock()
+	defer c.streamLock.RUnlock()
+
+	streams := make([]Stream, 0, len(c.streams))
+	for s := range c.streams {
+		streams = append(streams, s)
+	}
+	return streams
+}
+
+// Close closes this connection
+func (c *Conn) Close() error {
+	// close streams
+	streams := c.Streams()
+	for _, s := range streams {
+		s.Close()
+	}
+
+	// close underlying connection
+	c.netConn.Close()
+	return c.swarm.removeConn(c)
+}
+
 // ConnsWithGroup narrows down a set of connections to
 // those in a given group.
 func ConnsWithGroup(g Group, conns []*Conn) []*Conn {
@@ -176,4 +200,12 @@ func (s *Swarm) removeStream(stream *stream) error {
 	stream.conn.streamLock.Unlock()
 
 	return stream.ssStream.Close()
+}
+
+func (s *Swarm) removeConn(conn *Conn) error {
+	// remove from our maps
+	s.connLock.Lock()
+	delete(s.conns, conn)
+	s.connLock.Unlock()
+	return nil
 }
