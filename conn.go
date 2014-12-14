@@ -3,6 +3,7 @@ package peerstream
 import (
 	"errors"
 	"net"
+	"net/http"
 
 	ss "github.com/docker/spdystream"
 )
@@ -82,4 +83,73 @@ func ConnInConns(c1 *Conn, conns []*Conn) bool {
 		}
 	}
 	return false
+}
+
+// ------------------------------------------------------------------
+// All the connection setup logic here, in one place.
+// these are mostly *Swarm methods, but i wanted a less-crowded place
+// for them.
+// ------------------------------------------------------------------
+
+// addConn is the internal version of AddConn. we need the server bool
+// as spdystream requires it.
+func (s *Swarm) addConn(netConn net.Conn, server bool) (*Conn, error) {
+	if netConn == nil {
+		return nil, errors.New("nil conn")
+	}
+
+	s.connLock.Lock()
+	defer s.connLock.Unlock()
+
+	// first, check if we already have it...
+	for c := range s.conns {
+		if c.netConn == netConn {
+			return c, nil
+		}
+	}
+
+	// create a new spdystream connection
+	ssConn, err := ss.NewConnection(netConn, server)
+	if err != nil {
+		return nil, err
+	}
+
+	// add the connection
+	c := newConn(netConn, ssConn, s)
+	s.conns[c] = struct{}{}
+
+	// go listen for incoming streams on this connection
+	go c.ssConn.Serve(func(ssS *ss.Stream) {
+		stream := s.setupSSStream(ssS, c)
+		s.StreamHandler()(stream) // call our handler
+	})
+
+	return c, nil
+}
+
+// createStream is the internal function that creates a new stream. assumes
+// all validation has happened.
+func (s *Swarm) createStream(c *Conn) (*stream, error) {
+
+	// Create a new ss.Stream
+	ssStream, err := c.ssConn.CreateStream(http.Header{}, nil, false)
+	if err != nil {
+		return nil, err
+	}
+
+	// create a new stream
+	return s.setupSSStream(ssStream, c), nil
+}
+
+// newStream is the internal function that creates a new stream. assumes
+// all validation has happened.
+func (s *Swarm) setupSSStream(ssS *ss.Stream, c *Conn) *stream {
+	// create a new *stream
+	stream := newStream(ssS, c)
+
+	// add it to our map
+	s.streamLock.Lock()
+	s.streams[stream] = struct{}{}
+	s.streamLock.Unlock()
+	return stream
 }

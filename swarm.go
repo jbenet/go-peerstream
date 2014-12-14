@@ -3,12 +3,9 @@ package peerstream
 import (
 	"errors"
 	"net"
-	"net/http"
 	"sync"
 	"sync/atomic"
 	"unsafe"
-
-	ss "github.com/docker/spdystream"
 )
 
 // fd is a (file) descriptor, unix style
@@ -97,8 +94,8 @@ func (s *Swarm) Streams() []Stream {
 
 // AddListener adds net.Listener to the Swarm, and immediately begins
 // accepting incoming connections.
-func (s *Swarm) AddListener(net.Listener) error {
-	panic("nyi")
+func (s *Swarm) AddListener(l net.Listener) error {
+	return s.addListener(l)
 }
 
 // AddListenerWithRateLimit adds Listener to the Swarm, and immediately
@@ -112,36 +109,6 @@ func (s *Swarm) AddListener(net.Listener) error {
 // Idempotent: if the Connection has already been added, this is a no-op.
 func (s *Swarm) AddConn(netConn net.Conn) (*Conn, error) {
 	return s.addConn(netConn, false)
-}
-
-func (s *Swarm) addConn(netConn net.Conn, server bool) (*Conn, error) {
-	s.connLock.Lock()
-	defer s.connLock.Unlock()
-
-	// first, check if we already have it...
-	for c := range s.conns {
-		if c.netConn == netConn {
-			return c, nil
-		}
-	}
-
-	// create a new spdystream connection
-	ssConn, err := ss.NewConnection(netConn, server)
-	if err != nil {
-		return nil, err
-	}
-
-	// add the connection
-	c := newConn(netConn, ssConn, s)
-	s.conns[c] = struct{}{}
-
-	// go listen for incoming streams on this connection
-	go c.ssConn.Serve(func(ssS *ss.Stream) {
-		stream := s.setupSSStream(ssS, c)
-		s.StreamHandler()(stream) // call our handler
-	})
-
-	return c, nil
 }
 
 // NewStream opens a new Stream on the best available connection,
@@ -206,33 +173,6 @@ func (s *Swarm) NewStreamWithConn(conn *Conn) (Stream, error) {
 	}
 	s.connLock.RUnlock()
 	return s.createStream(conn)
-}
-
-// createStream is the internal function that creates a new stream. assumes
-// all validation has happened.
-func (s *Swarm) createStream(c *Conn) (*stream, error) {
-
-	// Create a new ss.Stream
-	ssStream, err := c.ssConn.CreateStream(http.Header{}, nil, false)
-	if err != nil {
-		return nil, err
-	}
-
-	// create a new stream
-	return s.setupSSStream(ssStream, c), nil
-}
-
-// newStream is the internal function that creates a new stream. assumes
-// all validation has happened.
-func (s *Swarm) setupSSStream(ssS *ss.Stream, c *Conn) *stream {
-	// create a new *stream
-	stream := newStream(ssS, c)
-
-	// add it to our map
-	s.streamLock.Lock()
-	s.streams[stream] = struct{}{}
-	s.streamLock.Unlock()
-	return stream
 }
 
 // ConnsWithGroup returns all the connections with a given Group
