@@ -4,8 +4,6 @@ import (
 	"errors"
 	"net"
 	"sync"
-	"sync/atomic"
-	"unsafe"
 )
 
 // fd is a (file) descriptor, unix style
@@ -25,12 +23,14 @@ type Swarm struct {
 	listenerLock sync.RWMutex
 
 	// selectConn is the default SelectConn function
-	selectConn SelectConn
+	selectConn   SelectConn
+	selectConnLk sync.RWMutex
 
 	// streamHandler receives Streams initiated remotely
 	// should be accessed with SetStreamHandler / StreamHandler
 	// as this pointer may be changed at any time.
-	streamHandler StreamHandler
+	streamHandler   StreamHandler
+	streamHandlerLk sync.RWMutex
 }
 
 func NewSwarm() *Swarm {
@@ -54,14 +54,20 @@ func (s *Swarm) SetStreamHandler(sh StreamHandler) {
 	if sh == nil {
 		sh = CloseHandler
 	}
-	atomic.SwapPointer((*unsafe.Pointer)(unsafe.Pointer(&s.streamHandler)), unsafe.Pointer(&sh))
+	s.streamHandlerLk.Lock()
+	defer s.streamHandlerLk.Unlock()
+	s.streamHandler = sh
+	// atomic.SwapPointer((*unsafe.Pointer)(unsafe.Pointer(&s.streamHandler)), unsafe.Pointer(&sh))
 }
 
 // StreamHandler returns the Swarm's current StreamHandler.
 // This is a threadsafe (atomic) operation
 func (s *Swarm) StreamHandler() StreamHandler {
-	p := atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&s.streamHandler)))
-	return StreamHandler(*(*StreamHandler)(p))
+	s.streamHandlerLk.RLock()
+	defer s.streamHandlerLk.RUnlock()
+	return s.streamHandler
+	// p := atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&s.streamHandler)))
+	// return StreamHandler(*(*StreamHandler)(p))
 }
 
 // SetConnSelect assigns the connection selector in the swarm.
@@ -71,7 +77,10 @@ func (s *Swarm) SetSelectConn(cs SelectConn) {
 	if cs == nil {
 		cs = SelectRandomConn
 	}
-	atomic.SwapPointer((*unsafe.Pointer)(unsafe.Pointer(&s.selectConn)), unsafe.Pointer(&cs))
+	s.selectConnLk.Lock()
+	defer s.selectConnLk.Unlock()
+	s.selectConn = cs
+	// atomic.SwapPointer((*unsafe.Pointer)(unsafe.Pointer(&s.selectConn)), unsafe.Pointer(&cs))
 }
 
 // ConnSelect returns the Swarm's current connection selector.
@@ -79,8 +88,11 @@ func (s *Swarm) SetSelectConn(cs SelectConn) {
 // possible connections. The default chooses one at random.
 // This is a threadsafe (atomic) operation
 func (s *Swarm) SelectConn() SelectConn {
-	p := atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&s.selectConn)))
-	return SelectConn(*(*SelectConn)(p))
+	s.selectConnLk.RLock()
+	defer s.selectConnLk.RUnlock()
+	return s.selectConn
+	// p := atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&s.selectConn)))
+	// return SelectConn(*(*SelectConn)(p))
 }
 
 // Conns returns all the connections associated with this Swarm.
