@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net"
+	"os"
 
 	ps "github.com/jbenet/go-peerstream"
 )
@@ -106,14 +108,18 @@ func main() {
 
 	for i, stream := range []ps.Stream{s1, s2, s3} {
 		stream.Wait()
-		fmt.Fprintf(stream, "Hello World %d\n", i)
+		str := "stream %d ready:"
+		fmt.Fprintf(stream, str, i)
 
-		buf := make([]byte, 13)
+		buf := make([]byte, len(str))
 		stream.Read(buf)
 		fmt.Println(string(buf))
-
-		stream.Close()
 	}
+
+	go io.Copy(os.Stdout, s1)
+	go io.Copy(os.Stdout, s2)
+	go io.Copy(os.Stdout, s3)
+	io.Copy(io.MultiWriter(s1, s2, s3), os.Stdin)
 
 	// r := peerstream.ProtoRouter()
 	// r.AddRoute("bitswap", BitswapHandler)
@@ -127,4 +133,8 @@ func main() {
 
 	// }
 
+}
+
+func log(s string) {
+	fmt.Fprintf(os.Stderr, s+"\n")
 }
