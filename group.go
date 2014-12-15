@@ -14,6 +14,21 @@ var ErrGroupNotFound = errors.New("group not found")
 // it is meant to work like a KeyType in maps
 type Group interface{}
 
+// Groupable is an interface for a set of objects that can
+// be assigned groups: Streams, Connections, and Listeners.
+// Objects inherit groups (e.g. a Stream inherits the groups
+// of its parent Connection, and in turn that of its Listener).
+type Groupable interface {
+	// Groups returns the groups this object belongs to
+	Groups() []Group
+
+	// InGroup returns whether this object belongs to a Group
+	InGroup(g Group) bool
+
+	// AddGroup adds this object to a group
+	AddGroup(g Group)
+}
+
 // groupSet is a struct designed to be embedded and
 // give things group memebership
 type groupSet struct {

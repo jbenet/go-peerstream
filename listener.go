@@ -32,6 +32,27 @@ func (l *Listener) Groups() []Group {
 	return l.groups.Groups()
 }
 
+// InGroup returns whether this Listener belongs to a Group
+func (l *Listener) InGroup(g Group) bool {
+	return l.groups.Has(g)
+}
+
+// AddGroup assigns given Group to Listener
+func (l *Listener) AddGroup(g Group) {
+	l.groups.Add(g)
+}
+
+// ListenersWithGroup narrows down a set of listeners to those in given group.
+func ListenersWithGroup(g Group, ls []*Listener) []*Listener {
+	var out []*Listener
+	for _, l := range ls {
+		if l.InGroup(g) {
+			out = append(out, l)
+		}
+	}
+	return out
+}
+
 // accept continously accepts incoming connections and
 // adds them to the listener's Swarm. is is meant to be
 // run in a goroutine.

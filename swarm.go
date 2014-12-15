@@ -232,6 +232,11 @@ func (s *Swarm) ConnsWithGroup(g Group) []*Conn {
 	return ConnsWithGroup(g, s.Conns())
 }
 
+// StreamsWithGroup returns all the streams with a given Group
+func (s *Swarm) StreamsWithGroup(g Group) []Stream {
+	return StreamsWithGroup(g, s.Streams())
+}
+
 // Close shuts down the Swarm, and it's listeners.
 func (s *Swarm) Close() error {
 	// shut down TODO

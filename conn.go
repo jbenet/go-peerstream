@@ -72,7 +72,17 @@ func (c *Conn) SPDYConn() *ss.Connection {
 	return c.ssConn
 }
 
-// AddGroup assigns given Group to conn
+// Groups returns the Groups this Conn belongs to
+func (c *Conn) Groups() []Group {
+	return c.groups.Groups()
+}
+
+// InGroup returns whether this Conn belongs to a Group
+func (c *Conn) InGroup(g Group) bool {
+	return c.groups.Has(g)
+}
+
+// AddGroup assigns given Group to Conn
 func (c *Conn) AddGroup(g Group) {
 	c.groups.Add(g)
 }
@@ -106,12 +116,11 @@ func (c *Conn) Close() error {
 	return c.swarm.removeConn(c)
 }
 
-// ConnsWithGroup narrows down a set of connections to
-// those in a given group.
+// ConnsWithGroup narrows down a set of connections to those in a given group.
 func ConnsWithGroup(g Group, conns []*Conn) []*Conn {
 	var out []*Conn
 	for _, c := range conns {
-		if c.groups.Has(g) {
+		if c.InGroup(g) {
 			out = append(out, c)
 		}
 	}

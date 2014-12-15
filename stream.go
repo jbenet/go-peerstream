@@ -18,6 +18,7 @@ type Stream interface {
 	io.Reader
 	io.Writer
 	io.Closer
+	Groupable
 
 	// Conn returns the Conn associated with this Stream
 	Conn() *Conn
@@ -61,6 +62,21 @@ func (s *stream) Swarm() *Swarm {
 	return s.conn.swarm
 }
 
+// Groups returns the Groups this Stream belongs to
+func (s *stream) Groups() []Group {
+	return s.groups.Groups()
+}
+
+// InGroup returns whether this stream belongs to a Group
+func (s *stream) InGroup(g Group) bool {
+	return s.groups.Has(g)
+}
+
+// AddGroup assigns given Group to Stream
+func (s *stream) AddGroup(g Group) {
+	s.groups.Add(g)
+}
+
 // Write writes bytes to a stream, calling write data for each call.
 func (s *stream) Wait() error {
 	return s.ssStream.Wait()
@@ -76,4 +92,15 @@ func (s *stream) Write(p []byte) (n int, err error) {
 
 func (s *stream) Close() error {
 	return s.conn.swarm.removeStream(s)
+}
+
+// StreamsWithGroup narrows down a set of streams to those in given group.
+func StreamsWithGroup(g Group, streams []Stream) []Stream {
+	var out []Stream
+	for _, s := range streams {
+		if s.InGroup(g) {
+			out = append(out, s)
+		}
+	}
+	return out
 }
