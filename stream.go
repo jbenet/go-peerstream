@@ -28,6 +28,9 @@ type Stream interface {
 
 	// Write writes bytes to a stream, calling write data for each call.
 	Wait() error
+
+	// SPDYStream returns the underlying spdystream.Stream
+	SPDYStream() *ss.Stream
 }
 
 type stream struct {
