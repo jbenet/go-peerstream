@@ -6,6 +6,10 @@ import (
 )
 
 var SelectRandomConn = func(conns []*Conn) *Conn {
+	if len(conns) == 0 {
+		return nil
+	}
+
 	return conns[rand.Intn(len(conns))]
 }
 
