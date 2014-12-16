@@ -1,8 +1,6 @@
 package peerstream
 
 import (
-	"io"
-
 	ss "github.com/docker/spdystream"
 )
 
@@ -12,36 +10,19 @@ import (
 // It works sort of like a http.HandleFunc.
 // Note: the StreamHandler is called sequentially, so spawn
 // goroutines or pass the Stream. See EchoHandler.
-type StreamHandler func(s Stream)
+type StreamHandler func(s *Stream)
 
-type Stream interface {
-	io.Reader
-	io.Writer
-	io.Closer
-	Groupable
-
-	// Conn returns the Conn associated with this Stream
-	Conn() *Conn
-
-	// Swarm returns the Swarm asociated with this Stream
-	Swarm() *Swarm
-
-	// Write writes bytes to a stream, calling write data for each call.
-	Wait() error
-
-	// SPDYStream returns the underlying spdystream.Stream
-	SPDYStream() *ss.Stream
-}
-
-type stream struct {
+// Stream is an io.{Read,Write,Close}r to a remote counterpart.
+// It wraps a spdystream.Stream, and links it to a Conn and groups
+type Stream struct {
 	ssStream *ss.Stream
 
 	conn   *Conn
 	groups groupSet
 }
 
-func newStream(ssS *ss.Stream, c *Conn) *stream {
-	s := &stream{
+func newStream(ssS *ss.Stream, c *Conn) *Stream {
+	s := &Stream{
 		conn:     c,
 		ssStream: ssS,
 		groups:   groupSet{m: make(map[Group]struct{})},
@@ -51,55 +32,55 @@ func newStream(ssS *ss.Stream, c *Conn) *stream {
 }
 
 // SPDYStream returns the underlying *spdystream.Stream
-func (s *stream) SPDYStream() *ss.Stream {
+func (s *Stream) SPDYStream() *ss.Stream {
 	return s.ssStream
 }
 
 // Conn returns the Conn associated with this Stream
-func (s *stream) Conn() *Conn {
+func (s *Stream) Conn() *Conn {
 	return s.conn
 }
 
 // Swarm returns the Swarm asociated with this Stream
-func (s *stream) Swarm() *Swarm {
+func (s *Stream) Swarm() *Swarm {
 	return s.conn.swarm
 }
 
 // Groups returns the Groups this Stream belongs to
-func (s *stream) Groups() []Group {
+func (s *Stream) Groups() []Group {
 	return s.groups.Groups()
 }
 
 // InGroup returns whether this stream belongs to a Group
-func (s *stream) InGroup(g Group) bool {
+func (s *Stream) InGroup(g Group) bool {
 	return s.groups.Has(g)
 }
 
 // AddGroup assigns given Group to Stream
-func (s *stream) AddGroup(g Group) {
+func (s *Stream) AddGroup(g Group) {
 	s.groups.Add(g)
 }
 
 // Write writes bytes to a stream, calling write data for each call.
-func (s *stream) Wait() error {
+func (s *Stream) Wait() error {
 	return s.ssStream.Wait()
 }
 
-func (s *stream) Read(p []byte) (n int, err error) {
+func (s *Stream) Read(p []byte) (n int, err error) {
 	return s.ssStream.Read(p)
 }
 
-func (s *stream) Write(p []byte) (n int, err error) {
+func (s *Stream) Write(p []byte) (n int, err error) {
 	return s.ssStream.Write(p)
 }
 
-func (s *stream) Close() error {
+func (s *Stream) Close() error {
 	return s.conn.swarm.removeStream(s)
 }
 
 // StreamsWithGroup narrows down a set of streams to those in given group.
-func StreamsWithGroup(g Group, streams []Stream) []Stream {
-	var out []Stream
+func StreamsWithGroup(g Group, streams []*Stream) []*Stream {
+	var out []*Stream
 	for _, s := range streams {
 		if s.InGroup(g) {
 			out = append(out, s)

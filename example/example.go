@@ -106,7 +106,7 @@ func main() {
 	// streams from github.com/docker/spdystream, so they work the same
 	// way:
 
-	for i, stream := range []ps.Stream{s1, s2, s3} {
+	for i, stream := range []*ps.Stream{s1, s2, s3} {
 		stream.Wait()
 		str := "stream %d ready:"
 		fmt.Fprintf(stream, str, i)

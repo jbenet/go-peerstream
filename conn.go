@@ -42,7 +42,7 @@ type Conn struct {
 	swarm  *Swarm
 	groups groupSet
 
-	streams    map[*stream]struct{}
+	streams    map[*Stream]struct{}
 	streamLock sync.RWMutex
 }
 
@@ -52,7 +52,7 @@ func newConn(nconn net.Conn, sconn *ss.Connection, s *Swarm) *Conn {
 		ssConn:  sconn,
 		swarm:   s,
 		groups:  groupSet{m: make(map[Group]struct{})},
-		streams: make(map[*stream]struct{}),
+		streams: make(map[*Stream]struct{}),
 	}
 }
 
@@ -88,15 +88,15 @@ func (c *Conn) AddGroup(g Group) {
 }
 
 // Stream returns a stream associated with this Conn
-func (c *Conn) NewStream() (Stream, error) {
+func (c *Conn) NewStream() (*Stream, error) {
 	return c.swarm.NewStreamWithConn(c)
 }
 
-func (c *Conn) Streams() []Stream {
+func (c *Conn) Streams() []*Stream {
 	c.streamLock.RLock()
 	defer c.streamLock.RUnlock()
 
-	streams := make([]Stream, 0, len(c.streams))
+	streams := make([]*Stream, 0, len(c.streams))
 	for s := range c.streams {
 		streams = append(streams, s)
 	}
@@ -197,7 +197,7 @@ func (s *Swarm) addConn(netConn net.Conn, server bool) (*Conn, error) {
 
 // createStream is the internal function that creates a new stream. assumes
 // all validation has happened.
-func (s *Swarm) createStream(c *Conn) (*stream, error) {
+func (s *Swarm) createStream(c *Conn) (*Stream, error) {
 
 	// Create a new ss.Stream
 	ssStream, err := c.ssConn.CreateStream(http.Header{}, nil, false)
@@ -211,8 +211,8 @@ func (s *Swarm) createStream(c *Conn) (*stream, error) {
 
 // newStream is the internal function that creates a new stream. assumes
 // all validation has happened.
-func (s *Swarm) setupSSStream(ssS *ss.Stream, c *Conn) *stream {
-	// create a new *stream
+func (s *Swarm) setupSSStream(ssS *ss.Stream, c *Conn) *Stream {
+	// create a new *Stream
 	stream := newStream(ssS, c)
 
 	// add it to our streams maps
@@ -227,7 +227,7 @@ func (s *Swarm) setupSSStream(ssS *ss.Stream, c *Conn) *stream {
 	return stream
 }
 
-func (s *Swarm) removeStream(stream *stream) error {
+func (s *Swarm) removeStream(stream *Stream) error {
 
 	// remove from our maps
 	s.streamLock.Lock()

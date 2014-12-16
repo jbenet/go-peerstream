@@ -11,7 +11,7 @@ type fd uint32
 
 type Swarm struct {
 	// active streams.
-	streams    map[*stream]struct{}
+	streams    map[*Stream]struct{}
 	streamLock sync.RWMutex
 
 	// active connections. generate new Streams
@@ -32,7 +32,7 @@ type Swarm struct {
 
 func NewSwarm() *Swarm {
 	return &Swarm{
-		streams:       make(map[*stream]struct{}),
+		streams:       make(map[*Stream]struct{}),
 		conns:         make(map[*Conn]struct{}),
 		listeners:     make(map[*Listener]struct{}),
 		selectConn:    SelectRandomConn,
@@ -127,8 +127,8 @@ func (s *Swarm) Listeners() []*Listener {
 }
 
 // Streams returns all the streams associated with this Swarm.
-func (s *Swarm) Streams() []Stream {
-	out := make([]Stream, 0, len(s.streams))
+func (s *Swarm) Streams() []*Stream {
+	out := make([]*Stream, 0, len(s.streams))
 	for c := range s.streams {
 		out = append(out, c)
 	}
@@ -156,11 +156,11 @@ func (s *Swarm) AddConn(netConn net.Conn) (*Conn, error) {
 
 // NewStream opens a new Stream on the best available connection,
 // as selected by current swarm.SelectConn.
-func (s *Swarm) NewStream() (Stream, error) {
+func (s *Swarm) NewStream() (*Stream, error) {
 	return s.NewStreamSelectConn(s.SelectConn())
 }
 
-func (s *Swarm) newStreamSelectConn(selConn SelectConn, conns []*Conn) (Stream, error) {
+func (s *Swarm) newStreamSelectConn(selConn SelectConn, conns []*Conn) (*Stream, error) {
 	if selConn == nil {
 		return nil, errors.New("nil SelectConn")
 	}
@@ -174,7 +174,7 @@ func (s *Swarm) newStreamSelectConn(selConn SelectConn, conns []*Conn) (Stream, 
 
 // NewStreamWithSelectConn opens a new Stream on a connection selected
 // by selConn.
-func (s *Swarm) NewStreamSelectConn(selConn SelectConn) (Stream, error) {
+func (s *Swarm) NewStreamSelectConn(selConn SelectConn) (*Stream, error) {
 	if selConn == nil {
 		return nil, errors.New("nil SelectConn")
 	}
@@ -189,14 +189,14 @@ func (s *Swarm) NewStreamSelectConn(selConn SelectConn) (Stream, error) {
 // NewStreamWithGroup opens a new Stream on an available connection in
 // the given group. Uses the current swarm.SelectConn to pick between
 // multiple connections.
-func (s *Swarm) NewStreamWithGroup(group Group) (Stream, error) {
+func (s *Swarm) NewStreamWithGroup(group Group) (*Stream, error) {
 	conns := s.ConnsWithGroup(group)
 	return s.newStreamSelectConn(s.SelectConn(), conns)
 }
 
 // NewStreamWithNetConn opens a new Stream on given net.Conn.
 // Calls s.AddConn(netConn).
-func (s *Swarm) NewStreamWithNetConn(netConn net.Conn) (Stream, error) {
+func (s *Swarm) NewStreamWithNetConn(netConn net.Conn) (*Stream, error) {
 	c, err := s.AddConn(netConn)
 	if err != nil {
 		return nil, err
@@ -205,7 +205,7 @@ func (s *Swarm) NewStreamWithNetConn(netConn net.Conn) (Stream, error) {
 }
 
 // NewStreamWithConnection opens a new Stream on given connection.
-func (s *Swarm) NewStreamWithConn(conn *Conn) (Stream, error) {
+func (s *Swarm) NewStreamWithConn(conn *Conn) (*Stream, error) {
 	if conn == nil {
 		return nil, errors.New("nil Conn")
 	}
@@ -233,7 +233,7 @@ func (s *Swarm) ConnsWithGroup(g Group) []*Conn {
 }
 
 // StreamsWithGroup returns all the streams with a given Group
-func (s *Swarm) StreamsWithGroup(g Group) []Stream {
+func (s *Swarm) StreamsWithGroup(g Group) []*Stream {
 	return StreamsWithGroup(g, s.Streams())
 }
 

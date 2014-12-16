@@ -19,7 +19,7 @@ defer swarm.Close()
 swarm.SetStreamHandler(peerstream.EchoHandler)
 
 // EchoHandler looks like this:
-EchoHandler := func(s Stream) {
+EchoHandler := func(s *Stream) {
   io.Copy(s, s)
 }
 
