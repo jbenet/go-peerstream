@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"net"
 	"os"
 	"time"
@@ -69,8 +68,7 @@ func main() {
 		}
 		log("sender got new stream %d", nSndStream)
 		nSndStream++
-
-		go io.Copy(os.Stdout, s)
+		s.Wait()
 	}
 }
 
