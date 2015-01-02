@@ -1,8 +1,8 @@
 package peerstream_yamux
 
 import (
+	"io/ioutil"
 	"net"
-	"os"
 	"time"
 
 	yamux "github.com/hashicorp/yamux"
@@ -71,7 +71,7 @@ var DefaultTransport = (*Transport)(&yamux.Config{
 	EnableKeepAlive:     true,               // from yamux.DefaultConfig
 	KeepAliveInterval:   30 * time.Second,   // from yamux.DefaultConfig
 	MaxStreamWindowSize: uint32(256 * 1024), // from yamux.DefaultConfig
-	LogOutput:           os.Stderr,
+	LogOutput:           ioutil.Discard,
 })
 
 func (t *Transport) NewConn(nc net.Conn, isServer bool) (pst.Conn, error) {
