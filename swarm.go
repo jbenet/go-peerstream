@@ -251,6 +251,28 @@ func (s *Swarm) StreamsWithGroup(g Group) []*Stream {
 
 // Close shuts down the Swarm, and it's listeners.
 func (s *Swarm) Close() error {
-	// shut down TODO
+	// automatically close everything new we get.
+	s.SetConnHandler(func(c *Conn) { c.Close() })
+	s.SetStreamHandler(func(s *Stream) { s.Close() })
+
+	var wgl sync.WaitGroup
+	for _, l := range s.Listeners() {
+		wgl.Add(1)
+		go func() {
+			l.Close()
+			wgl.Done()
+		}()
+	}
+	wgl.Wait()
+
+	var wgc sync.WaitGroup
+	for _, c := range s.Conns() {
+		wgc.Add(1)
+		go func() {
+			c.Close()
+			wgc.Done()
+		}()
+	}
+	wgc.Wait()
 	return nil
 }
