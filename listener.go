@@ -85,10 +85,10 @@ func (l *Listener) accept() {
 	for {
 		conn, err := l.netList.Accept()
 		if err != nil {
-			l.acceptErr <- err
 			if isTemporaryErr(err) {
 				continue
 			}
+			l.acceptErr <- err
 			return // ok, problems. bail.
 		}
 		tempDelay = 0
