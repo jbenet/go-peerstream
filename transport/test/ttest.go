@@ -372,6 +372,10 @@ func SubtestStressNSwarmNConnNStreamNMsg(t *testing.T, tr pst.Transport, nSwarm,
 		t.Error(err)
 	}
 
+	for _, s := range swarms {
+		s.Close()
+	}
+
 }
 
 func SubtestStress1Swarm1Conn1Stream1Msg(t *testing.T, tr pst.Transport) {
