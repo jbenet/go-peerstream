@@ -87,10 +87,8 @@ func (c *conn) Serve(handler pst.StreamHandler) {
 		// -- at this moment -- not the solution. Either spdystream must
 		// change, or we must throttle another way. go-peerstream handles
 		// every new stream in its own goroutine.
-		go func() {
-			s.SendReply(http.Header{}, false)
-			handler((*stream)(s))
-		}()
+		s.SendReply(http.Header{}, false)
+		go handler((*stream)(s))
 	})
 }
 
