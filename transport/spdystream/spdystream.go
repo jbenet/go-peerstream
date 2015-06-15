@@ -55,6 +55,8 @@ func (c *conn) IsClosed() bool {
 	select {
 	case <-c.closed:
 		return true
+	case <-c.sc.CloseChan():
+		return true
 	default:
 		return false
 	}
