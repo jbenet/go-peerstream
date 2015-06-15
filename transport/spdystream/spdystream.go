@@ -4,8 +4,8 @@ import (
 	"net"
 	"net/http"
 
+	ss "github.com/docker/spdystream"
 	pst "github.com/jbenet/go-peerstream/transport"
-	ss "github.com/jbenet/spdystream"
 )
 
 // stream implements pst.Stream using a ss.Stream
