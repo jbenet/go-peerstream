@@ -166,20 +166,20 @@ func (s *Swarm) addConn(netConn net.Conn, isServer bool) (*Conn, error) {
 	// unlocked **before** the Handler is called (which needs to be
 	// sequential). This was the simplest thing :)
 	setupConn := func() (*Conn, error) {
-		s.connLock.Lock()
-		defer s.connLock.Unlock()
-
-		// first, check if we already have it...
-		for c := range s.conns {
-			if c.netConn == netConn {
-				return c, nil
-			}
-		}
 
 		// create a new spdystream connection
 		ssConn, err := s.transport.NewConn(netConn, isServer)
 		if err != nil {
 			return nil, err
+		}
+
+		s.connLock.Lock()
+		defer s.connLock.Unlock()
+		// first, check if we already have it...
+		for c := range s.conns {
+			if c.netConn == netConn {
+				return c, nil
+			}
 		}
 
 		// add the connection
