@@ -7,7 +7,7 @@ import (
 
 	pst "github.com/jbenet/go-peerstream/transport"
 	spdy "github.com/jbenet/go-peerstream/transport/spdystream"
-	yamux "github.com/jbenet/go-peerstream/transport/spdystream"
+	yamux "github.com/jbenet/go-peerstream/transport/yamux"
 	mss "github.com/whyrusleeping/go-multistream"
 )
 
@@ -24,7 +24,7 @@ func NewTransport() pst.Transport {
 
 	tpts := map[string]pst.Transport{
 		"/spdystream": spdy.Transport,
-		"/yamux":      yamux.Transport,
+		"/yamux":      yamux.DefaultTransport,
 	}
 
 	return &transport{
