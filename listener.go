@@ -104,6 +104,7 @@ func (l *Listener) accept() {
 			conn2, err := l.swarm.addConn(conn, true)
 			if err != nil {
 				l.acceptErr <- err
+				return
 			}
 			conn2.groups.AddSet(&l.groups) // add out groups
 		}(conn)
