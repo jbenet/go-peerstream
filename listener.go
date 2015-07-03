@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	tec "github.com/jbenet/go-temp-err-catcher"
+	tec "github.com/jbenet/go-peerstream/Godeps/_workspace/src/github.com/jbenet/go-temp-err-catcher"
 )
 
 // AcceptConcurrency is how many connections can simultaneously be
