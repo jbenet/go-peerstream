@@ -5,7 +5,7 @@ import (
 	"net"
 	"time"
 
-	yamux "github.com/hashicorp/yamux"
+	yamux "github.com/jbenet/go-peerstream/Godeps/_workspace/src/github.com/hashicorp/yamux"
 	pst "github.com/jbenet/go-peerstream/transport"
 )
 
