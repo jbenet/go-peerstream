@@ -6,6 +6,7 @@ import (
 	"net"
 
 	pst "github.com/jbenet/go-peerstream/transport"
+	multiplex "github.com/jbenet/go-peerstream/transport/multiplex"
 	spdy "github.com/jbenet/go-peerstream/transport/spdystream"
 	yamux "github.com/jbenet/go-peerstream/transport/yamux"
 	mss "github.com/whyrusleeping/go-multistream"
@@ -19,10 +20,12 @@ type transport struct {
 
 func NewTransport() pst.Transport {
 	mux := mss.NewMultistreamMuxer()
+	mux.AddHandler("/multiplex", nil)
 	mux.AddHandler("/spdystream", nil)
 	mux.AddHandler("/yamux", nil)
 
 	tpts := map[string]pst.Transport{
+		"/multiplex":  multiplex.DefaultTransport,
 		"/spdystream": spdy.Transport,
 		"/yamux":      yamux.DefaultTransport,
 	}
@@ -43,7 +46,7 @@ func (t *transport) NewConn(nc net.Conn, isServer bool) (pst.Conn, error) {
 		proto = selected
 	} else {
 		// prefer yamux
-		selected, err := mss.SelectOneOf([]string{"/yamux", "/spdystream"}, nc)
+		selected, err := mss.SelectOneOf([]string{"/yamux", "/spdystream", "/multiplex"}, nc)
 		if err != nil {
 			return nil, err
 		}
