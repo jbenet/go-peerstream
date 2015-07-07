@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"sync"
 
 	tec "github.com/jbenet/go-peerstream/Godeps/_workspace/src/github.com/jbenet/go-temp-err-catcher"
 )
@@ -74,6 +75,8 @@ func ListenersWithGroup(g Group, ls []*Listener) []*Listener {
 // TODO: add rate limiting
 func (l *Listener) accept() {
 	defer l.teardown()
+	var wg sync.WaitGroup
+	defer wg.Wait()
 
 	// catching the error here is odd. doing what net/http does:
 	// http://golang.org/src/net/http/server.go?s=51504:51550#L1728
@@ -98,8 +101,10 @@ func (l *Listener) accept() {
 		// do this in a goroutine to avoid blocking the Accept loop.
 		// note that this does not rate limit accepts.
 		limit <- struct{}{} // sema down
+		wg.Add(1)
 		go func(conn net.Conn) {
 			defer func() { <-limit }() // sema up
+			defer wg.Done()
 
 			conn2, err := l.swarm.addConn(conn, true)
 			if err != nil {
