@@ -74,9 +74,11 @@ func ListenersWithGroup(g Group, ls []*Listener) []*Listener {
 // run in a goroutine.
 // TODO: add rate limiting
 func (l *Listener) accept() {
-	defer l.teardown()
 	var wg sync.WaitGroup
-	defer wg.Wait()
+	defer func() {
+		wg.Wait() // must happen before teardown
+		l.teardown()
+	}()
 
 	// catching the error here is odd. doing what net/http does:
 	// http://golang.org/src/net/http/server.go?s=51504:51550#L1728
