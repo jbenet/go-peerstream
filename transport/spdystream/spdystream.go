@@ -64,7 +64,10 @@ func (c *conn) IsClosed() bool {
 
 // OpenStream creates a new stream.
 func (c *conn) OpenStream() (pst.Stream, error) {
-	s, err := c.spdyConn().CreateStream(http.Header{}, nil, false)
+	s, err := c.spdyConn().CreateStream(http.Header{
+		":method": []string{"GET"}, // this is here for HTTP/SPDY interop
+		":path":   []string{"/"},   // this is here for HTTP/SPDY interop
+	}, nil, false)
 	if err != nil {
 		return nil, err
 	}
