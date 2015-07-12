@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	smux "github.com/jbenet/go-stream-muxer"
+	smux "github.com/jbenet/go-peerstream/Godeps/_workspace/src/github.com/jbenet/go-stream-muxer"
 )
 
 // fd is a (file) descriptor, unix style

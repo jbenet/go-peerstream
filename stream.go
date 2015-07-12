@@ -3,7 +3,7 @@ package peerstream
 import (
 	"fmt"
 
-	smux "github.com/jbenet/go-stream-muxer"
+	smux "github.com/jbenet/go-peerstream/Godeps/_workspace/src/github.com/jbenet/go-stream-muxer"
 )
 
 // StreamHandler is a function which receives a Stream. It
