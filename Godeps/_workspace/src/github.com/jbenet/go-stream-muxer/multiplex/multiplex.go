@@ -5,10 +5,11 @@ import (
 	"net"
 
 	smux "github.com/jbenet/go-peerstream/Godeps/_workspace/src/github.com/jbenet/go-stream-muxer"
-	mp "github.com/whyrusleeping/go-multiplex" // Conn is a connection to a remote peer.
+	mp "github.com/jbenet/go-peerstream/Godeps/_workspace/src/github.com/whyrusleeping/go-multiplex"
 )
 
-var ErrUseServe = errors.New("not implemented, use Serve")
+var ErrUseServe = // Conn is a connection to a remote peer.
+errors.New("not implemented, use Serve")
 
 type conn struct {
 	*mp.Multiplex
