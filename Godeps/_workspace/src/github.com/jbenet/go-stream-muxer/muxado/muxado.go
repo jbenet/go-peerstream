@@ -3,7 +3,7 @@ package peerstream_muxado
 import (
 	"net"
 
-	muxado "github.com/inconshreveable/muxado"
+	muxado "github.com/jbenet/go-peerstream/Godeps/_workspace/src/github.com/inconshreveable/muxado"
 	smux "github.com/jbenet/go-peerstream/Godeps/_workspace/src/github.com/jbenet/go-stream-muxer"
 )
 

@@ -5,12 +5,11 @@ package multistream
 import (
 	"net"
 
-	mss "github.com/whyrusleeping/go-multistream"
-
 	smux "github.com/jbenet/go-peerstream/Godeps/_workspace/src/github.com/jbenet/go-stream-muxer"
 	multiplex "github.com/jbenet/go-peerstream/Godeps/_workspace/src/github.com/jbenet/go-stream-muxer/multiplex"
 	spdy "github.com/jbenet/go-peerstream/Godeps/_workspace/src/github.com/jbenet/go-stream-muxer/spdystream"
 	yamux "github.com/jbenet/go-peerstream/Godeps/_workspace/src/github.com/jbenet/go-stream-muxer/yamux"
+	mss "github.com/jbenet/go-peerstream/Godeps/_workspace/src/github.com/whyrusleeping/go-multistream"
 )
 
 type transport struct {
