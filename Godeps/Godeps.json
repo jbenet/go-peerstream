@@ -19,7 +19,7 @@
 		},
 		{
 			"ImportPath": "github.com/jbenet/go-stream-muxer",
-			"Rev": "dd36c9c97045daa4e7ae58ce8092a4daf4d75841"
+			"Rev": "e2e261765847234749629e0190fef193a4548303"
 		},
 		{
 			"ImportPath": "github.com/jbenet/go-temp-err-catcher",
@@ -27,7 +27,7 @@
 		},
 		{
 			"ImportPath": "github.com/whyrusleeping/go-multiplex",
-			"Rev": "ce5baa716247510379cb7640a14da857afd3b622"
+			"Rev": "474b9aebeb391746f304ddf7c764a5da12319857"
 		},
 		{
 			"ImportPath": "github.com/whyrusleeping/go-multistream",

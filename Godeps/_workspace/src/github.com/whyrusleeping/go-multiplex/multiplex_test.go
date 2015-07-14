@@ -17,26 +17,20 @@ func TestBasicStreams(t *testing.T) {
 
 	mes := []byte("Hello world")
 	go func() {
-		err := mpb.Serve(func(s *Stream) {
-			_, err := s.Write(mes)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			err = s.Close()
-			if err != nil {
-				t.Fatal(err)
-			}
-		})
+		s, err := mpb.Accept()
 		if err != nil {
 			t.Fatal(err)
 		}
-	}()
 
-	go func() {
-		mpa.Serve(func(s *Stream) {
-			s.Close()
-		})
+		_, err = s.Write(mes)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		err = s.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
 	}()
 
 	s := mpa.NewStream()
@@ -70,19 +64,13 @@ func TestEcho(t *testing.T) {
 	mes := make([]byte, 40960)
 	rand.New().Read(mes)
 	go func() {
-		err := mpb.Serve(func(s *Stream) {
-			defer s.Close()
-			io.Copy(s, s)
-		})
+		s, err := mpb.Accept()
 		if err != nil {
 			t.Fatal(err)
 		}
-	}()
 
-	go func() {
-		mpa.Serve(func(s *Stream) {
-			s.Close()
-		})
+		defer s.Close()
+		io.Copy(s, s)
 	}()
 
 	s := mpa.NewStream()

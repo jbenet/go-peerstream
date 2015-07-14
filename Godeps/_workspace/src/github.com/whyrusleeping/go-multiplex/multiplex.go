@@ -66,25 +66,35 @@ func (s *Stream) receive(b []byte) {
 	}
 }
 
+func (m *Multiplex) Accept() (*Stream, error) {
+	select {
+	case s, ok := <-m.nstreams:
+		if !ok {
+			return nil, errors.New("multiplex closed")
+		}
+		return s, nil
+	case err := <-m.errs:
+		return nil, err
+	case <-m.closed:
+		return nil, errors.New("multiplex closed")
+	}
+}
+
 func (s *Stream) Read(b []byte) (int, error) {
 	if s.extra == nil {
 		select {
 		case <-s.closed:
 			return 0, io.EOF
 		case read, ok := <-s.data_in:
-			buf := make([]byte, len(read))
-			copy(buf, read)
 			if !ok {
 				return 0, io.EOF
 			}
-			s.extra = buf
+			s.extra = read
 		}
 	}
 	n := copy(b, s.extra)
 	if n < len(s.extra) {
-		extra := make([]byte, len(s.extra)-n)
-		copy(extra, s.extra[n:])
-		s.extra = extra
+		s.extra = s.extra[n:]
 	} else {
 		s.extra = nil
 	}
@@ -133,19 +143,29 @@ type Multiplex struct {
 	closed    chan struct{}
 	initiator bool
 
+	nstreams chan *Stream
+	errs     chan error
+
 	channels map[uint64]*Stream
 	ch_lock  sync.Mutex
 }
 
 func NewMultiplex(con io.ReadWriteCloser, initiator bool) *Multiplex {
-	return &Multiplex{
+	mp := &Multiplex{
 		con:       con,
 		initiator: initiator,
 		buf:       bufio.NewReader(con),
 		channels:  make(map[uint64]*Stream),
 		outchan:   make(chan msg),
 		closed:    make(chan struct{}),
+		nstreams:  make(chan *Stream, 16),
+		errs:      make(chan error),
 	}
+
+	go mp.handleOutgoing()
+	go mp.handleIncoming()
+
+	return mp
 }
 
 func (mp *Multiplex) Close() error {
@@ -243,26 +263,26 @@ func (mp *Multiplex) NewNamedStream(name string) *Stream {
 	return s
 }
 
-func (mp *Multiplex) Serve(handler func(s *Stream)) error {
-	go mp.handleOutgoing()
-	mp.buf = bufio.NewReader(mp.con)
+func (mp *Multiplex) sendErr(err error) {
+	select {
+	case mp.errs <- err:
+	case <-mp.closed:
+	}
+}
 
+func (mp *Multiplex) handleIncoming() {
 	defer mp.shutdown()
 	for {
 		ch, tag, err := mp.readNextHeader()
 		if err != nil {
-			if err == io.EOF {
-				return nil
-			}
-			return err
+			mp.sendErr(err)
+			return
 		}
 
 		b, err := mp.readNext()
 		if err != nil {
-			if err == io.EOF {
-				return nil
-			}
-			return err
+			mp.sendErr(err)
+			return
 		}
 
 		mp.ch_lock.Lock()
@@ -274,7 +294,11 @@ func (mp *Multiplex) Serve(handler func(s *Stream)) error {
 			}
 			msch = newStream(ch, name, false, mp.outchan)
 			mp.channels[ch] = msch
-			go handler(msch)
+			select {
+			case mp.nstreams <- msch:
+			case <-mp.closed:
+				return
+			}
 			if tag == NewStream {
 				mp.ch_lock.Unlock()
 				continue
