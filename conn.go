@@ -118,12 +118,12 @@ func (c *Conn) Streams() []*Stream {
 // Close closes this connection
 func (c *Conn) Close() error {
 	c.closeLock.Lock()
-	defer c.closeLock.Unlock()
-
 	if c.closed {
+		c.closeLock.Unlock()
 		return nil
 	}
 	c.closed = true
+	c.closeLock.Unlock()
 
 	// close streams
 	streams := c.Streams()
