@@ -7,7 +7,7 @@ import (
 	"os"
 
 	ps "github.com/jbenet/go-peerstream"
-	spdy "github.com/jbenet/go-peerstream/Godeps/_workspace/src/github.com/jbenet/go-stream-muxer/spdystream"
+	spdy "github.com/whyrusleeping/go-smux-spdystream"
 )
 
 func main() {

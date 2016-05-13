@@ -15,7 +15,7 @@ import (
 
 	ps "github.com/jbenet/go-peerstream"
 
-	smux "github.com/jbenet/go-peerstream/Godeps/_workspace/src/github.com/jbenet/go-stream-muxer"
+	smux "gx/ipfs/Qmb1US8uyZeEpMyc56wVZy2cDFdQjNFojAUYVCoo9ieTqp/go-stream-muxer"
 )
 
 var randomness []byte
