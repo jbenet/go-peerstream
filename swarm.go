@@ -183,7 +183,10 @@ func (s *Swarm) Conns() []*Conn {
 
 	open := make([]*Conn, 0, len(conns))
 	for _, c := range conns {
-		if c.smuxConn.IsClosed() {
+		// TODO: unmuxed connections won't be garbage collected for now.
+		// This isnt a common usecase and is only here for a few test applications
+		// in the future, we will fix this
+		if c.smuxConn != nil && c.smuxConn.IsClosed() {
 			c.GoClose()
 		} else {
 			open = append(open, c)
@@ -362,7 +365,7 @@ func (s *Swarm) connGarbageCollect() {
 		}
 
 		for _, c := range s.Conns() {
-			if c.smuxConn.IsClosed() {
+			if c.smuxConn != nil && c.smuxConn.IsClosed() {
 				go c.Close()
 			}
 		}
