@@ -12,6 +12,7 @@ import (
 )
 
 func TestConnTimeout(t *testing.T) {
+	ps.DoConnClosing = true
 	ps.NoStreamCloseTimeout = time.Second / 2
 	ps.GarbageCollectTimeout = time.Second / 10
 	tpt := yamux.DefaultTransport
