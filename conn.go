@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"time"
 
 	smux "gx/ipfs/Qmb1US8uyZeEpMyc56wVZy2cDFdQjNFojAUYVCoo9ieTqp/go-stream-muxer"
 )
@@ -34,6 +35,8 @@ var ErrInvalidConnSelected = errors.New("invalid selected connection")
 // ErrNoConnections signals that no connections are available
 var ErrNoConnections = errors.New("no connections")
 
+var NoStreamCloseTimeout = time.Second * 20
+
 // Conn is a Swarm-associated connection.
 type Conn struct {
 	smuxConn smux.Conn
@@ -42,8 +45,12 @@ type Conn struct {
 	swarm  *Swarm
 	groups groupSet
 
-	streams    map[*Stream]struct{}
-	streamLock sync.RWMutex
+	// lastStreamAt marks the last time we opened or closed a stream over the
+	// conn.  It is used to determine when we should timeout a conn for having
+	// no streams and close it.
+	lastStreamAt time.Time
+	streams      map[*Stream]struct{}
+	streamLock   sync.RWMutex
 
 	closed    bool
 	closeLock sync.Mutex
@@ -289,6 +296,7 @@ func (s *Swarm) setupStream(smuxStream smux.Stream, c *Conn) *Stream {
 	c.streamLock.Lock()
 	s.streams[stream] = struct{}{}
 	c.streams[stream] = struct{}{}
+	c.lastStreamAt = time.Now()
 	s.streamLock.Unlock()
 	c.streamLock.Unlock()
 
@@ -305,6 +313,9 @@ func (s *Swarm) removeStream(stream *Stream) error {
 	stream.conn.streamLock.Lock()
 	delete(s.streams, stream)
 	delete(stream.conn.streams, stream)
+	if len(stream.conn.streams) == 0 {
+		stream.conn.lastStreamAt = time.Now()
+	}
 	s.streamLock.Unlock()
 	stream.conn.streamLock.Unlock()
 

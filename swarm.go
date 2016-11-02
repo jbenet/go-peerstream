@@ -367,7 +367,16 @@ func (s *Swarm) connGarbageCollect() {
 		for _, c := range s.Conns() {
 			if c.smuxConn != nil && c.smuxConn.IsClosed() {
 				go c.Close()
+				continue
 			}
+
+			c.streamLock.Lock()
+			if len(c.streams) == 0 && time.Since(c.lastStreamAt) > NoStreamCloseTimeout {
+				// TODO: maybe some logic around keeping a minimum number of connections open?
+				// heuristics? user preferences?
+				go c.Close()
+			}
+			c.streamLock.Unlock()
 		}
 	}
 }
