@@ -1,15 +1,16 @@
+test: deps
+	go test ./muxtest
 
-godep:
-	go get github.com/tools/godep
+test_race: deps
+	go test -race ./muxtest
 
-vendor: godep
-	godep save -r ./...
+gx-bins:
+	go get github.com/whyrusleeping/gx
+	go get github.com/whyrusleeping/gx-go
 
-build:
-	go build ./...
+deps: gx-bins
+	gx --verbose install --global
+	gx-go rewrite
 
-test:
-	go test ./...
-
-test_race:
-	go test -race -cpu 5 ./...
+clean: gx-bins
+	gx-go rewrite --undo

@@ -6,7 +6,7 @@ import (
 	"net"
 	"sync"
 
-	smux "github.com/jbenet/go-peerstream/Godeps/_workspace/src/github.com/jbenet/go-stream-muxer"
+	smux "gx/ipfs/Qmb1US8uyZeEpMyc56wVZy2cDFdQjNFojAUYVCoo9ieTqp/go-stream-muxer"
 )
 
 // ConnHandler is a function which receives a Conn. It allows
@@ -153,7 +153,12 @@ func (c *Conn) Close() error {
 
 	// close underlying connection
 	c.swarm.removeConn(c)
-	err := c.smuxConn.Close()
+	var err error
+	if c.smuxConn != nil {
+		err = c.smuxConn.Close()
+	} else {
+		err = c.netConn.Close()
+	}
 	c.swarm.notifyAll(func(n Notifiee) {
 		n.Disconnected(c)
 	})
@@ -196,12 +201,14 @@ func (s *Swarm) addConn(netConn net.Conn, isServer bool) (*Conn, error) {
 
 	s.ConnHandler()(c)
 
-	// go listen for incoming streams on this connection
-	go c.smuxConn.Serve(func(ss smux.Stream) {
-		// log.Printf("accepted stream %d from %s\n", ssS.Identifier(), netConn.RemoteAddr())
-		stream := s.setupStream(ss, c)
-		s.StreamHandler()(stream) // call our handler
-	})
+	if c.smuxConn != nil {
+		// go listen for incoming streams on this connection
+		go c.smuxConn.Serve(func(ss smux.Stream) {
+			// log.Printf("accepted stream %d from %s\n", ssS.Identifier(), netConn.RemoteAddr())
+			stream := s.setupStream(ss, c)
+			s.StreamHandler()(stream) // call our handler
+		})
+	}
 
 	s.notifyAll(func(n Notifiee) {
 		n.Connected(c)
@@ -229,10 +236,15 @@ func (s *Swarm) setupConn(netConn net.Conn, isServer bool) (*Conn, error) {
 	// construct the connection without hanging onto the lock
 	// (as there could be deadlock if so.)
 
-	// create a new spdystream connection
-	ssConn, err := s.transport.NewConn(netConn, isServer)
-	if err != nil {
-		return nil, err
+	var ssConn smux.Conn
+	if s.transport != nil {
+		// create a new stream muxer connection
+		c, err := s.transport.NewConn(netConn, isServer)
+		if err != nil {
+			return nil, err
+		}
+
+		ssConn = c
 	}
 
 	// take the lock to add it to the map.
