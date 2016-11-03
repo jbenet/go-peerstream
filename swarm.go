@@ -16,6 +16,8 @@ type fd uint32
 // GarbageCollectTimeout governs the periodic connection closer.
 var GarbageCollectTimeout = 5 * time.Second
 
+var DoConnClosing = false
+
 type Swarm struct {
 	// the transport we'll use.
 	transport smux.Transport
@@ -367,6 +369,17 @@ func (s *Swarm) connGarbageCollect() {
 		for _, c := range s.Conns() {
 			if c.smuxConn != nil && c.smuxConn.IsClosed() {
 				go c.Close()
+				continue
+			}
+
+			if DoConnClosing {
+				c.streamLock.Lock()
+				if len(c.streams) == 0 && time.Since(c.lastStreamAt) > NoStreamCloseTimeout {
+					// TODO: maybe some logic around keeping a minimum number of connections open?
+					// heuristics? user preferences?
+					go c.Close()
+				}
+				c.streamLock.Unlock()
 			}
 		}
 	}
