@@ -3,6 +3,7 @@ package peerstream
 import (
 	"fmt"
 
+	protocol "gx/ipfs/QmZNkThpqfVXs9GNbexPrfBbXSLNYeKrE7jwFM2oqHbyqN/go-libp2p-protocol"
 	smux "gx/ipfs/Qmb1US8uyZeEpMyc56wVZy2cDFdQjNFojAUYVCoo9ieTqp/go-stream-muxer"
 )
 
@@ -19,8 +20,9 @@ type StreamHandler func(s *Stream)
 type Stream struct {
 	smuxStream smux.Stream
 
-	conn   *Conn
-	groups groupSet
+	conn     *Conn
+	groups   groupSet
+	protocol protocol.ID
 }
 
 func newStream(ss smux.Stream, c *Conn) *Stream {
@@ -79,6 +81,14 @@ func (s *Stream) Write(p []byte) (n int, err error) {
 
 func (s *Stream) Close() error {
 	return s.conn.swarm.removeStream(s)
+}
+
+func (s *Stream) Protocol() protocol.ID {
+	return s.protocol
+}
+
+func (s *Stream) SetProtocol(p protocol.ID) {
+	s.protocol = p
 }
 
 // StreamsWithGroup narrows down a set of streams to those in given group.

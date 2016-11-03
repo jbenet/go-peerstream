@@ -18,6 +18,12 @@
       "hash": "QmWHgLqrghM9zw77nF6gdvT9ExQ2RB9pLxkd8sDHZf1rWb",
       "name": "go-temp-err-catcher",
       "version": "0.0.0"
+    },
+    {
+      "author": "whyrusleeping",
+      "hash": "QmZNkThpqfVXs9GNbexPrfBbXSLNYeKrE7jwFM2oqHbyqN",
+      "name": "go-libp2p-protocol",
+      "version": "1.0.0"
     }
   ],
   "gxVersion": "0.7.0",
@@ -26,3 +32,4 @@
   "name": "go-peerstream",
   "version": "1.1.0"
 }
+
