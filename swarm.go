@@ -3,11 +3,11 @@ package peerstream
 import (
 	"errors"
 	"fmt"
-	"net"
 	"sync"
 	"time"
 
-	smux "gx/ipfs/Qmb1US8uyZeEpMyc56wVZy2cDFdQjNFojAUYVCoo9ieTqp/go-stream-muxer"
+	smux "github.com/jbenet/go-stream-muxer"
+	iconn "github.com/libp2p/go-libp2p-interface-conn"
 )
 
 // fd is a (file) descriptor, unix style
@@ -219,7 +219,7 @@ func (s *Swarm) Streams() []*Stream {
 
 // AddListener adds net.Listener to the Swarm, and immediately begins
 // accepting incoming connections.
-func (s *Swarm) AddListener(l net.Listener) (*Listener, error) {
+func (s *Swarm) AddListener(l iconn.Listener) (*Listener, error) {
 	return s.addListener(l)
 }
 
@@ -232,7 +232,7 @@ func (s *Swarm) AddListener(l net.Listener) (*Listener, error) {
 // SPDY session and begin listening for Streams.
 // Returns the resulting Swarm-associated peerstream.Conn.
 // Idempotent: if the Connection has already been added, this is a no-op.
-func (s *Swarm) AddConn(netConn net.Conn) (*Conn, error) {
+func (s *Swarm) AddConn(netConn iconn.Conn) (*Conn, error) {
 	return s.addConn(netConn, false)
 }
 
@@ -278,7 +278,7 @@ func (s *Swarm) NewStreamWithGroup(group Group) (*Stream, error) {
 
 // NewStreamWithNetConn opens a new Stream on given net.Conn.
 // Calls s.AddConn(netConn).
-func (s *Swarm) NewStreamWithNetConn(netConn net.Conn) (*Stream, error) {
+func (s *Swarm) NewStreamWithNetConn(netConn iconn.Conn) (*Stream, error) {
 	c, err := s.AddConn(netConn)
 	if err != nil {
 		return nil, err

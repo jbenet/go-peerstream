@@ -3,10 +3,10 @@ package peerstream
 import (
 	"errors"
 	"fmt"
-	"net"
 	"sync"
 
-	tec "gx/ipfs/QmWHgLqrghM9zw77nF6gdvT9ExQ2RB9pLxkd8sDHZf1rWb/go-temp-err-catcher"
+	tec "github.com/jbenet/go-temp-err-catcher"
+	iconn "github.com/libp2p/go-libp2p-interface-conn"
 )
 
 // AcceptConcurrency is how many connections can simultaneously be
@@ -17,14 +17,14 @@ import (
 var AcceptConcurrency = 200
 
 type Listener struct {
-	netList net.Listener
+	netList iconn.Listener
 	groups  groupSet
 	swarm   *Swarm
 
 	acceptErr chan error
 }
 
-func newListener(nl net.Listener, s *Swarm) *Listener {
+func newListener(nl iconn.Listener, s *Swarm) *Listener {
 	return &Listener{
 		netList:   nl,
 		swarm:     s,
@@ -36,11 +36,6 @@ func newListener(nl net.Listener, s *Swarm) *Listener {
 func (l *Listener) String() string {
 	f := "<peerstream.Listener %s>"
 	return fmt.Sprintf(f, l.netList.Addr())
-}
-
-// NetListener is the underlying net.Listener
-func (l *Listener) NetListener() net.Listener {
-	return l.netList
 }
 
 // Groups returns the groups this Listener belongs to
@@ -104,7 +99,7 @@ func (l *Listener) accept() {
 		// note that this does not rate limit accepts.
 		limit <- struct{}{} // sema down
 		wg.Add(1)
-		go func(conn net.Conn) {
+		go func(conn iconn.Conn) {
 			defer func() { <-limit }() // sema up
 			defer wg.Done()
 
@@ -141,7 +136,7 @@ func (l *Listener) Close() error {
 }
 
 // addListener is the internal version of AddListener.
-func (s *Swarm) addListener(nl net.Listener) (*Listener, error) {
+func (s *Swarm) addListener(nl iconn.Listener) (*Listener, error) {
 	if nl == nil {
 		return nil, errors.New("nil listener")
 	}

@@ -24,6 +24,18 @@
       "hash": "QmZNkThpqfVXs9GNbexPrfBbXSLNYeKrE7jwFM2oqHbyqN",
       "name": "go-libp2p-protocol",
       "version": "1.0.0"
+    },
+    {
+      "author": "multiformats",
+      "hash": "QmT6Cp31887FpAc25z25YHgpFJohZedrYLWPPspRtj1Brp",
+      "name": "go-multiaddr-net",
+      "version": "1.5.1"
+    },
+    {
+      "author": "whyrusleeping",
+      "hash": "QmNxScD426NivSWRNJdLVfXLrzVdtNWxW74EnXAWJvgGwh",
+      "name": "go-libp2p-interface-conn",
+      "version": "0.1.2"
     }
   ],
   "gxVersion": "0.7.0",

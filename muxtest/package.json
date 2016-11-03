@@ -9,33 +9,9 @@
   "gxDependencies": [
     {
       "author": "whyrusleeping",
-      "hash": "QmZJM54H2j26QwmWAYaW24L8Hwo3ojrQmiGj3gBF9Quj8d",
-      "name": "go-smux-muxado",
-      "version": "1.0.0"
-    },
-    {
-      "author": "whyrusleeping",
-      "hash": "QmYaeRqthWTco7oQF4dztuqA94P8JF36gVjd2z2eEqKfrh",
-      "name": "go-smux-yamux",
-      "version": "1.1.0"
-    },
-    {
-      "author": "whyrusleeping",
-      "hash": "QmVcmcQE9eX4HQ8QwhVXpoHt3ennG7d299NDYFq9D1Uqa1",
-      "name": "go-smux-multistream",
-      "version": "1.0.0"
-    },
-    {
-      "author": "whyrusleeping",
-      "hash": "Qmao31fmDJxp9gY7YNqkN1i3kGaknL6XSzKtdC1VCU7Qj8",
-      "name": "go-smux-multiplex",
-      "version": "1.0.0"
-    },
-    {
-      "author": "whyrusleeping",
-      "hash": "QmWMKNLGkYJTZ4Tq3DQ8E9j86QaKvGjKgFzvLzGYXvW69Z",
-      "name": "go-smux-spdystream",
-      "version": "1.0.0"
+      "hash": "QmZ8MMKFwA95viWULoSYFZpA4kdFa8idmFSrP12YJwjjaL",
+      "name": "yamux",
+      "version": "1.0.1"
     }
   ],
   "gxVersion": "0.7.0",
@@ -44,3 +20,4 @@
   "name": "muxtest",
   "version": "0.0.0"
 }
+
