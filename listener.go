@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	tec "github.com/jbenet/go-temp-err-catcher"
-	iconn "github.com/libp2p/go-libp2p-interface-conn"
+	tec "gx/ipfs/QmWHgLqrghM9zw77nF6gdvT9ExQ2RB9pLxkd8sDHZf1rWb/go-temp-err-catcher"
+	tpt "gx/ipfs/QmWMia2fBVBesMerbtApQY7Tj2sgTaziveBACfCRUcv45f/go-libp2p-transport"
 )
 
 // AcceptConcurrency is how many connections can simultaneously be
@@ -17,19 +17,23 @@ import (
 var AcceptConcurrency = 200
 
 type Listener struct {
-	netList iconn.Listener
+	netList tpt.Listener
 	groups  groupSet
 	swarm   *Swarm
 
 	acceptErr chan error
 }
 
-func newListener(nl iconn.Listener, s *Swarm) *Listener {
+func newListener(nl tpt.Listener, s *Swarm) *Listener {
 	return &Listener{
 		netList:   nl,
 		swarm:     s,
 		acceptErr: make(chan error, 10),
 	}
+}
+
+func (l *Listener) NetListener() tpt.Listener {
+	return l.netList
 }
 
 // String returns a string representation of the Listener
@@ -99,7 +103,7 @@ func (l *Listener) accept() {
 		// note that this does not rate limit accepts.
 		limit <- struct{}{} // sema down
 		wg.Add(1)
-		go func(conn iconn.Conn) {
+		go func(conn tpt.Conn) {
 			defer func() { <-limit }() // sema up
 			defer wg.Done()
 
@@ -136,7 +140,7 @@ func (l *Listener) Close() error {
 }
 
 // addListener is the internal version of AddListener.
-func (s *Swarm) addListener(nl iconn.Listener) (*Listener, error) {
+func (s *Swarm) addListener(nl tpt.Listener) (*Listener, error) {
 	if nl == nil {
 		return nil, errors.New("nil listener")
 	}

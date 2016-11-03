@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	smux "github.com/jbenet/go-stream-muxer"
-	iconn "github.com/libp2p/go-libp2p-interface-conn"
+	tpt "gx/ipfs/QmWMia2fBVBesMerbtApQY7Tj2sgTaziveBACfCRUcv45f/go-libp2p-transport"
+	smux "gx/ipfs/Qmb1US8uyZeEpMyc56wVZy2cDFdQjNFojAUYVCoo9ieTqp/go-stream-muxer"
 )
 
 // fd is a (file) descriptor, unix style
@@ -219,7 +219,7 @@ func (s *Swarm) Streams() []*Stream {
 
 // AddListener adds net.Listener to the Swarm, and immediately begins
 // accepting incoming connections.
-func (s *Swarm) AddListener(l iconn.Listener) (*Listener, error) {
+func (s *Swarm) AddListener(l tpt.Listener) (*Listener, error) {
 	return s.addListener(l)
 }
 
@@ -228,12 +228,12 @@ func (s *Swarm) AddListener(l iconn.Listener) (*Listener, error) {
 // depends on the RateLimit option
 // func (s *Swarm) AddListenerWithRateLimit(net.Listner, RateLimit) // TODO
 
-// AddConn gives the Swarm ownership of net.Conn. The Swarm will open a
+// AddConn gives the Swarm ownership of tpt.Conn. The Swarm will open a
 // SPDY session and begin listening for Streams.
 // Returns the resulting Swarm-associated peerstream.Conn.
 // Idempotent: if the Connection has already been added, this is a no-op.
-func (s *Swarm) AddConn(netConn iconn.Conn) (*Conn, error) {
-	return s.addConn(netConn, false)
+func (s *Swarm) AddConn(tptConn tpt.Conn) (*Conn, error) {
+	return s.addConn(tptConn, false)
 }
 
 // NewStream opens a new Stream on the best available connection,
@@ -278,7 +278,7 @@ func (s *Swarm) NewStreamWithGroup(group Group) (*Stream, error) {
 
 // NewStreamWithNetConn opens a new Stream on given net.Conn.
 // Calls s.AddConn(netConn).
-func (s *Swarm) NewStreamWithNetConn(netConn iconn.Conn) (*Stream, error) {
+func (s *Swarm) NewStreamWithNetConn(netConn tpt.Conn) (*Stream, error) {
 	c, err := s.AddConn(netConn)
 	if err != nil {
 		return nil, err

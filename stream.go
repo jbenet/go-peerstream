@@ -3,8 +3,8 @@ package peerstream
 import (
 	"fmt"
 
-	smux "github.com/jbenet/go-stream-muxer"
-	protocol "github.com/libp2p/go-libp2p-protocol"
+	protocol "gx/ipfs/QmZNkThpqfVXs9GNbexPrfBbXSLNYeKrE7jwFM2oqHbyqN/go-libp2p-protocol"
+	smux "gx/ipfs/Qmb1US8uyZeEpMyc56wVZy2cDFdQjNFojAUYVCoo9ieTqp/go-stream-muxer"
 )
 
 // StreamHandler is a function which receives a Stream. It

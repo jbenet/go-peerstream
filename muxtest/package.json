@@ -12,6 +12,30 @@
       "hash": "QmZ8MMKFwA95viWULoSYFZpA4kdFa8idmFSrP12YJwjjaL",
       "name": "yamux",
       "version": "1.0.1"
+    },
+    {
+      "author": "whyrusleeping",
+      "hash": "Qme8hbiTP4VNr1s7FxsfnnqrxbxPz3KPWtuGYeGbtFnhGC",
+      "name": "go-smux-multistream",
+      "version": "1.3.1"
+    },
+    {
+      "author": "whyrusleeping",
+      "hash": "QmfXgTygwsTPyUWPWTAeBK6cFtTdMqmeeqhyhcNMhRpT1g",
+      "name": "go-smux-spdystream",
+      "version": "1.1.1"
+    },
+    {
+      "author": "whyrusleeping",
+      "hash": "QmSHTSkxXGQgaHWz91oZV3CDy3hmKmDgpjbYRT6niACG4E",
+      "name": "go-smux-yamux",
+      "version": "1.1.1"
+    },
+    {
+      "author": "whyrusleeping",
+      "hash": "QmNiFRHdeJgN9svSGkEtmhd5sGvv3suSKZ1sRkLqoCzL76",
+      "name": "go-tcp-transport",
+      "version": "1.1.0"
     }
   ],
   "gxVersion": "0.7.0",

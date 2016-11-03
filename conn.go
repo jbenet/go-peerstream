@@ -6,8 +6,8 @@ import (
 	"net"
 	"sync"
 
-	smux "github.com/jbenet/go-stream-muxer"
-	iconn "github.com/libp2p/go-libp2p-interface-conn"
+	tpt "gx/ipfs/QmWMia2fBVBesMerbtApQY7Tj2sgTaziveBACfCRUcv45f/go-libp2p-transport"
+	smux "gx/ipfs/Qmb1US8uyZeEpMyc56wVZy2cDFdQjNFojAUYVCoo9ieTqp/go-stream-muxer"
 )
 
 // ConnHandler is a function which receives a Conn. It allows
@@ -38,7 +38,7 @@ var ErrNoConnections = errors.New("no connections")
 // Conn is a Swarm-associated connection.
 type Conn struct {
 	smuxConn smux.Conn
-	netConn  iconn.Conn // underlying connection
+	netConn  tpt.Conn // underlying connection
 
 	swarm  *Swarm
 	groups groupSet
@@ -53,7 +53,7 @@ type Conn struct {
 	closingLock sync.Mutex
 }
 
-func newConn(nconn iconn.Conn, tconn smux.Conn, s *Swarm) *Conn {
+func newConn(nconn tpt.Conn, tconn smux.Conn, s *Swarm) *Conn {
 	return &Conn{
 		netConn:  nconn,
 		smuxConn: tconn,
@@ -194,7 +194,7 @@ func ConnInConns(c1 *Conn, conns []*Conn) bool {
 
 // addConn is the internal version of AddConn. we need the server bool
 // as spdystream requires it.
-func (s *Swarm) addConn(netConn iconn.Conn, isServer bool) (*Conn, error) {
+func (s *Swarm) addConn(netConn tpt.Conn, isServer bool) (*Conn, error) {
 	c, err := s.setupConn(netConn, isServer)
 	if err != nil {
 		return nil, err
@@ -219,7 +219,7 @@ func (s *Swarm) addConn(netConn iconn.Conn, isServer bool) (*Conn, error) {
 
 // setupConn adds the relevant connection to the map, first checking if it
 // was already there.
-func (s *Swarm) setupConn(netConn iconn.Conn, isServer bool) (*Conn, error) {
+func (s *Swarm) setupConn(netConn tpt.Conn, isServer bool) (*Conn, error) {
 	if netConn == nil {
 		return nil, errors.New("nil conn")
 	}
