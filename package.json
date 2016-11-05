@@ -4,7 +4,7 @@
     "url": "https://github.com/jbenet/go-peerstream"
   },
   "gx": {
-    "dvcsimport": "github.com/jbenet/go-peerstream"
+    "dvcsimport": "github.com/libp2p/go-peerstream"
   },
   "gxDependencies": [
     {
@@ -42,6 +42,6 @@
   "language": "go",
   "license": "",
   "name": "go-peerstream",
-  "version": "1.3.0"
+  "version": "1.4.1"
 }
 
