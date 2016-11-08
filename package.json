@@ -42,6 +42,6 @@
   "language": "go",
   "license": "",
   "name": "go-peerstream",
-  "version": "1.4.1"
+  "version": "1.5.0"
 }
 
