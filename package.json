@@ -9,9 +9,9 @@
   "gxDependencies": [
     {
       "author": "whyrusleeping",
-      "hash": "Qmb1US8uyZeEpMyc56wVZy2cDFdQjNFojAUYVCoo9ieTqp",
+      "hash": "QmeZBgYBHvxMukGK5ojg28BCNLB9SeXqT7XXg6o7r2GbJy",
       "name": "go-stream-muxer",
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
     {
       "author": "whyrusleeping",

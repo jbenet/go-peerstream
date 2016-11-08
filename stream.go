@@ -2,9 +2,10 @@ package peerstream
 
 import (
 	"fmt"
+	"time"
 
-	protocol "gx/ipfs/QmZNkThpqfVXs9GNbexPrfBbXSLNYeKrE7jwFM2oqHbyqN/go-libp2p-protocol"
-	smux "gx/ipfs/Qmb1US8uyZeEpMyc56wVZy2cDFdQjNFojAUYVCoo9ieTqp/go-stream-muxer"
+	smux "github.com/jbenet/go-stream-muxer"
+	protocol "github.com/libp2p/go-libp2p-protocol"
 )
 
 // StreamHandler is a function which receives a Stream. It
@@ -89,6 +90,18 @@ func (s *Stream) Protocol() protocol.ID {
 
 func (s *Stream) SetProtocol(p protocol.ID) {
 	s.protocol = p
+}
+
+func (s *Stream) SetDeadline(t time.Time) error {
+	return s.smuxStream.SetDeadline(t)
+}
+
+func (s *Stream) SetReadDeadline(t time.Time) error {
+	return s.smuxStream.SetReadDeadline(t)
+}
+
+func (s *Stream) SetWriteDeadline(t time.Time) error {
+	return s.smuxStream.SetWriteDeadline(t)
 }
 
 // StreamsWithGroup narrows down a set of streams to those in given group.

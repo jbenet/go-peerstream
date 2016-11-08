@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	tec "gx/ipfs/QmWHgLqrghM9zw77nF6gdvT9ExQ2RB9pLxkd8sDHZf1rWb/go-temp-err-catcher"
-	tpt "gx/ipfs/QmWMia2fBVBesMerbtApQY7Tj2sgTaziveBACfCRUcv45f/go-libp2p-transport"
+	tec "github.com/jbenet/go-temp-err-catcher"
+	tpt "github.com/libp2p/go-libp2p-transport"
 )
 
 // AcceptConcurrency is how many connections can simultaneously be

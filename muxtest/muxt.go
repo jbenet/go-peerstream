@@ -14,9 +14,9 @@ import (
 
 	ps "github.com/libp2p/go-peerstream"
 
+	smux "github.com/jbenet/go-stream-muxer"
+	ma "github.com/multiformats/go-multiaddr"
 	tcpc "gx/ipfs/QmNiFRHdeJgN9svSGkEtmhd5sGvv3suSKZ1sRkLqoCzL76/go-tcp-transport"
-	ma "gx/ipfs/QmUAQaWbKxGCUTuoQVvvicbQNZ9APF5pDGWyAZSe93AtKH/go-multiaddr"
-	smux "gx/ipfs/Qmb1US8uyZeEpMyc56wVZy2cDFdQjNFojAUYVCoo9ieTqp/go-stream-muxer"
 )
 
 var zeroaddr = ma.StringCast("/ip4/0.0.0.0/tcp/0")

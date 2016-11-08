@@ -6,8 +6,8 @@ import (
 	"net"
 	"sync"
 
-	tpt "gx/ipfs/QmWMia2fBVBesMerbtApQY7Tj2sgTaziveBACfCRUcv45f/go-libp2p-transport"
-	smux "gx/ipfs/Qmb1US8uyZeEpMyc56wVZy2cDFdQjNFojAUYVCoo9ieTqp/go-stream-muxer"
+	smux "github.com/jbenet/go-stream-muxer"
+	tpt "github.com/libp2p/go-libp2p-transport"
 )
 
 // ConnHandler is a function which receives a Conn. It allows
