@@ -42,6 +42,7 @@
   "language": "go",
   "license": "",
   "name": "go-peerstream",
-  "version": "1.5.0"
+  "releaseCmd": "git commit -a -m \"gx release $VERSION\"",
+  "version": "1.5.1"
 }
 
