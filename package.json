@@ -33,7 +33,7 @@
     },
     {
       "author": "whyrusleeping",
-      "hash": "QmR4YrM1DdvYmox249o8aday8oiotkcsT1Qzv42ujPEQDb",
+      "hash": "QmVpYwkpCJLSLpEY9tUbDQjCVdEVusgibpE9TopF5MPoSS",
       "name": "go-libp2p-transport",
       "version": "2.2.4"
     }
@@ -43,6 +43,6 @@
   "license": "",
   "name": "go-peerstream",
   "releaseCmd": "git commit -a -m \"gx release $VERSION\"",
-  "version": "1.5.1"
+  "version": "1.5.2"
 }
 

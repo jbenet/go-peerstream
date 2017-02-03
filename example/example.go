@@ -6,7 +6,7 @@ import (
 	"net"
 	"os"
 
-	ps "github.com/jbenet/go-peerstream"
+	ps "github.com/libp2p/go-peerstream"
 	spdy "github.com/whyrusleeping/go-smux-spdystream"
 )
 
