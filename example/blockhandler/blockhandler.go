@@ -3,12 +3,14 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"net"
 	"os"
 	"time"
 
 	ps "github.com/libp2p/go-peerstream"
-	spdy "github.com/whyrusleeping/go-smux-spdystream"
+
+	tpt "github.com/libp2p/go-tcp-transport"
+	ma "github.com/multiformats/go-multiaddr"
+	yamux "github.com/whyrusleeping/go-smux-yamux"
 )
 
 func die(err error) {
@@ -18,14 +20,19 @@ func die(err error) {
 
 func main() {
 	// create a new Swarm
-	swarm := ps.NewSwarm(spdy.Transport)
+	swarm := ps.NewSwarm(yamux.DefaultTransport)
 	defer swarm.Close()
 
 	// tell swarm what to do with a new incoming streams.
 	// EchoHandler just echos back anything they write.
 	swarm.SetStreamHandler(ps.EchoHandler)
 
-	l, err := net.Listen("tcp", "localhost:8001")
+	tr := tpt.NewTCPTransport()
+	addr, err := ma.NewMultiaddr("/ip4/127.0.0.1/tcp/12001")
+	if err != nil {
+		die(err)
+	}
+	l, err := tr.Listen(addr)
 	if err != nil {
 		die(err)
 	}
@@ -34,7 +41,11 @@ func main() {
 		die(err)
 	}
 
-	nc, err := net.Dial("tcp", "localhost:8001")
+	dialer, err := tr.Dialer(addr)
+	if err != nil {
+		die(err)
+	}
+	nc, err := dialer.Dial(addr)
 	if err != nil {
 		die(err)
 	}

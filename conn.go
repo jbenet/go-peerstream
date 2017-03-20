@@ -63,7 +63,7 @@ func newConn(nconn tpt.Conn, tconn smux.Conn, s *Swarm) *Conn {
 	}
 }
 
-// String returns a string representation of the Conn
+// String returns a string representation of the Conn.
 func (c *Conn) String() string {
 	c.streamLock.RLock()
 	ls := len(c.streams)
@@ -72,12 +72,12 @@ func (c *Conn) String() string {
 	return fmt.Sprintf(f, ls, c.netConn.LocalAddr(), c.netConn.RemoteAddr())
 }
 
-// Swarm returns the Swarm associated with this Conn
+// Swarm returns the Swarm associated with this Conn.
 func (c *Conn) Swarm() *Swarm {
 	return c.swarm
 }
 
-// NetConn returns the underlying net.Conn
+// NetConn returns the underlying net.Conn.
 func (c *Conn) NetConn() net.Conn {
 	return c.netConn
 }
@@ -88,26 +88,27 @@ func (c *Conn) Conn() smux.Conn {
 	return c.smuxConn
 }
 
-// Groups returns the Groups this Conn belongs to
+// Groups returns the Groups this Conn belongs to.
 func (c *Conn) Groups() []Group {
 	return c.groups.Groups()
 }
 
-// InGroup returns whether this Conn belongs to a Group
+// InGroup returns whether this Conn belongs to a Group.
 func (c *Conn) InGroup(g Group) bool {
 	return c.groups.Has(g)
 }
 
-// AddGroup assigns given Group to Conn
+// AddGroup assigns given Group to Conn.
 func (c *Conn) AddGroup(g Group) {
 	c.groups.Add(g)
 }
 
-// Stream returns a stream associated with this Conn
+// NewStream returns a stream associated with this Conn.
 func (c *Conn) NewStream() (*Stream, error) {
 	return c.swarm.NewStreamWithConn(c)
 }
 
+// Streams returns the slice of all streams associated to this Conn.
 func (c *Conn) Streams() []*Stream {
 	c.streamLock.RLock()
 	defer c.streamLock.RUnlock()
@@ -177,6 +178,8 @@ func ConnsWithGroup(g Group, conns []*Conn) []*Conn {
 	return out
 }
 
+// ConnInConns returns true if a connection belongs to the
+// conns slice.
 func ConnInConns(c1 *Conn, conns []*Conn) bool {
 	for _, c2 := range conns {
 		if c2 == c1 {

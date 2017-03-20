@@ -42,7 +42,7 @@ func (s *Stream) String() string {
 	return fmt.Sprintf(f, s.conn.NetConn().LocalAddr(), s.conn.NetConn().RemoteAddr())
 }
 
-// SPDYStream returns the underlying *spdystream.Stream
+// Stream returns the underlying stream muxer Stream
 func (s *Stream) Stream() smux.Stream {
 	return s.smuxStream
 }
@@ -72,34 +72,56 @@ func (s *Stream) AddGroup(g Group) {
 	s.groups.Add(g)
 }
 
+// Read reads from the stream and returns the number
+// of bytes read. It implements the io.Reader interface.
 func (s *Stream) Read(p []byte) (n int, err error) {
 	return s.smuxStream.Read(p)
 }
 
+// Write writes to the stream and returns the number
+// of bytes written. It implements the io.Writer interface.
 func (s *Stream) Write(p []byte) (n int, err error) {
 	return s.smuxStream.Write(p)
 }
 
+// Close closes the stream and removes it from the swarm.
 func (s *Stream) Close() error {
 	return s.conn.swarm.removeStream(s)
 }
 
+// Protocol returns the protocol identifier associated to this Stream.
 func (s *Stream) Protocol() protocol.ID {
 	return s.protocol
 }
 
+// SetProtocol sets the protocol identifier for this Stream.
 func (s *Stream) SetProtocol(p protocol.ID) {
 	s.protocol = p
 }
 
+// SetDeadline sets the read and write deadlines associated
+// with the Stream. It is equivalent to calling both
+// SetReadDeadline and SetWriteDeadline.
+//
+// A deadline is an absolute time after which I/O operations
+// fail with a timeout (see type Error) instead of
+// blocking.
 func (s *Stream) SetDeadline(t time.Time) error {
 	return s.smuxStream.SetDeadline(t)
 }
 
+// SetReadDeadline sets the deadline for future Read calls
+// and any currently-blocked Read call.
+// A zero value for t means Read will not time out.
 func (s *Stream) SetReadDeadline(t time.Time) error {
 	return s.smuxStream.SetReadDeadline(t)
 }
 
+// SetWriteDeadline sets the deadline for future Write calls
+// and any currently-blocked Write call.
+// Even if write times out, it may return n > 0, indicating that
+// some of the data was successfully written.
+// A zero value for t means Write will not time out.
 func (s *Stream) SetWriteDeadline(t time.Time) error {
 	return s.smuxStream.SetWriteDeadline(t)
 }

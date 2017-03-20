@@ -1,7 +1,7 @@
 {
   "author": "whyrusleeping",
   "bugs": {
-    "url": "https://github.com/jbenet/go-peerstream"
+    "url": "https://github.com/libp2p/go-peerstream"
   },
   "gx": {
     "dvcsimport": "github.com/libp2p/go-peerstream"
@@ -40,7 +40,7 @@
   ],
   "gxVersion": "0.7.0",
   "language": "go",
-  "license": "",
+  "license": "MIT",
   "name": "go-peerstream",
   "releaseCmd": "git commit -a -m \"gx release $VERSION\"",
   "version": "1.6.0"

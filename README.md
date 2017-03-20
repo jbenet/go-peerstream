@@ -1,148 +1,78 @@
-# go-peerstream p2p multi-multixplexing
+# go-peerstream
 
-Package peerstream is a peer-to-peer networking library that multiplexes
-connections to many hosts. It tried to simplify the complexity of:
+[![](https://img.shields.io/badge/made%20by-Protocol%20Labs-blue.svg?style=flat-square)](http://ipn.io)
+[![](https://img.shields.io/badge/project-libp2p-blue.svg?style=flat-square)](http://github.com/libp2p/libp2p)
+[![](https://img.shields.io/badge/freenode-%23ipfs-blue.svg?style=flat-square)](http://webchat.freenode.net/?channels=%23ipfs)
+[![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
+[![GoDoc](https://godoc.org/github.com/libp2p/go-peerstream?status.svg)](https://godoc.org/github.com/libp2p/go-peerstream)
+[![Build Status](https://travis-ci.org/libp2p/go-peerstream.svg?branch=master)](https://travis-ci.org/libp2p/go-peerstream)
+[![Coverage Status](https://coveralls.io/repos/github/libp2p/go-peerstream/badge.svg?branch=master)](https://coveralls.io/github/libp2p/go-peerstream?branch=master)
+
+> P2P stream multi-multiplexing in Go
+
+Package peerstream is a peer-to-peer networking library that multiplexes connections to many hosts. It attempts to simplify the complexity of:
 
 * accepting incoming connections over **multiple** listeners
 * dialing outgoing connections over **multiple** transports
 * multiplexing **multiple** connections per-peer
 * multiplexing **multiple** different servers or protocols
 * handling backpressure correctly
-* handling stream multiplexing (we use SPDY, but maybe QUIC some day)
+* handling stream multiplexing
 * providing a **simple** interface to the user
 
-### Godoc: https://godoc.org/github.com/jbenet/go-peerstream
+## Table of Contents
 
----
+- [Install](#install)
+- [Usage](#usage)
+- [Maintainers](#maintainers)
+- [Contribute](#contribute)
+- [License](#license)
 
-See this working [example/example.go](example/example):
+## Install
 
-```Go
-package main
+`go-peerstream` is a standard Go module which can be installed with:
 
-import (
-  "fmt"
-  "io"
-  "net"
-  "os"
-
-  ps "github.com/jbenet/go-peerstream"
-)
-
-func main() {
-  // create a new Swarm
-  swarm := ps.NewSwarm()
-  defer swarm.Close()
-
-  // tell swarm what to do with a new incoming streams.
-  // EchoHandler just echos back anything they write.
-  swarm.SetStreamHandler(ps.EchoHandler)
-
-  // Okay, let's try listening on some transports
-  l1, err := net.Listen("tcp", "localhost:8001")
-  if err != nil {
-    panic(err)
-  }
-
-  l2, err := net.Listen("tcp", "localhost:8002")
-  if err != nil {
-    panic(err)
-  }
-
-  // tell swarm to accept incoming connections on these
-  // listeners. Swarm will start accepting new connections.
-  if err := swarm.AddListener(l1); err != nil {
-    panic(err)
-  }
-  if err := swarm.AddListener(l2); err != nil {
-    panic(err)
-  }
-
-  // ok, let's try some outgoing connections
-  nc1, err := net.Dial("tcp", "localhost:8001")
-  if err != nil {
-    panic(err)
-  }
-
-  nc2, err := net.Dial("tcp", "localhost:8002")
-  if err != nil {
-    panic(err)
-  }
-
-  // add them to the swarm
-  c1, err := swarm.AddConn(nc1)
-  if err != nil {
-    panic(err)
-  }
-  c2, err := swarm.AddConn(nc2)
-  if err != nil {
-    panic(err)
-  }
-
-  // Swarm treats listeners as sources of new connections and does
-  // not distinguish between outgoing or incoming connections.
-  // It provides the net.Conn to the StreamHandler so you can
-  // distinguish between them however you wish.
-
-  // now let's try opening some streams!
-  // You can specify what connection you want to use
-  s1, err := swarm.NewStreamWithConn(c1)
-  if err != nil {
-    panic(err)
-  }
-
-  // Or, you can specify a SelectConn function that picks between all
-  // (it calls NewStreamWithConn underneath the hood)
-  s2, err := swarm.NewStreamSelectConn(func(conns []*ps.Conn) *ps.Conn {
-    if len(conns) > 0 {
-      return conns[0]
-    }
-    return nil
-  })
-  if err != nil {
-    panic(err)
-  }
-
-  // Or, you can bind connections to ConnGroup ids. You can bind a conn to
-  // multiple groups. And, if conn wasn't in swarm, it calls swarm.AddConn.
-  // You can use any Go `KeyType` as a group A `KeyType` as in maps...)
-  swarm.AddConnToGroup(c2, 1)
-
-  // And then use that group to select a connection. Swarm will use any
-  // connection it finds in that group, using a SelectConn you can rebind:
-  //   swarm.SetGroupSelectConn(1, SelectConn)
-  //   swarm.SetDegaultGroupSelectConn(SelectConn)
-  s3, err := swarm.NewStreamWithGroup(1)
-  if err != nil {
-    panic(err)
-  }
-
-  // Why groups? It's because with many connections, and many transports,
-  // and many Servers (or Protocols), we can use the Swarm to associate
-  // a different StreamHandlers per group, and to let us create NewStreams
-  // on a given group.
-
-  // Ok, we have streams. now what. Use them! Our Streams are basically
-  // streams from github.com/docker/spdystream, so they work the same
-  // way:
-
-  for i, stream := range []ps.Stream{s1, s2, s3} {
-    stream.Wait()
-    str := "stream %d ready:"
-    fmt.Fprintf(stream, str, i)
-
-    buf := make([]byte, len(str))
-    stream.Read(buf)
-    fmt.Println(string(buf))
-  }
-
-  go io.Copy(os.Stdout, s1)
-  go io.Copy(os.Stdout, s2)
-  go io.Copy(os.Stdout, s3)
-  io.Copy(io.MultiWriter(s1, s2, s3), os.Stdin)
-}
-
-func log(s string) {
-  fmt.Fprintf(os.Stderr, s+"\n")
-}
+```sh
+go get github.com/libp2p/go-peerstream
 ```
+
+Note that `go-peerstream` is packaged with Gx, so it is recommended to use Gx to install and use it (see Usage section).
+
+
+## Usage
+
+### Using Gx and Gx-go
+
+This module is packaged with [Gx](https://github.com/whyrusleeping/gx). In order to use it in your own project it is recommended that you:
+
+```sh
+go get -u github.com/whyrusleeping/gx
+go get -u github.com/whyrusleeping/gx-go
+cd <your-project-repository>
+gx init
+gx import github.com/libp2p/go-peerstream
+gx install --global
+gx-go --rewrite
+```
+
+Please check [Gx](https://github.com/whyrusleeping/gx) and [Gx-go](https://github.com/whyrusleeping/gx-go) documentation for more information.
+
+### Example
+
+See [example/example.go](example/example.go) and [example/blockhandler/blockhandler.go](example/blockhandler/blockhandler.go) for examples covering the functionality of `go-peerstream`.
+
+To build the examples, please make sure to run `make` in the `examples/` folder.
+
+## Maintainers
+
+This project is maintained by **@hsanjuan**.
+
+## Contribute
+
+PRs accepted.
+
+Small note: If editing the README, please conform to the [standard-readme](https://github.com/RichardLitt/standard-readme) specification.
+
+## License
+
+MIT © Protocol Labs, Inc
