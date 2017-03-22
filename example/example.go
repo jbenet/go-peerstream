@@ -3,10 +3,11 @@ package main
 import (
 	"fmt"
 	"io"
-	"net"
 	"os"
 
 	ps "github.com/libp2p/go-peerstream"
+	tcpt "github.com/libp2p/go-tcp-transport"
+	ma "github.com/multiformats/go-multiaddr"
 	spdy "github.com/whyrusleeping/go-smux-spdystream"
 )
 
@@ -21,15 +22,28 @@ func main() {
 	log("setup EchoHandler")
 	swarm.SetStreamHandler(ps.EchoHandler)
 
+	// Set up a TCP transport
+	tpt := tcpt.NewTCPTransport()
+
 	// Okay, let's try listening on some transports
 	log("listening at localhost:8001")
-	l1, err := net.Listen("tcp", "localhost:8001")
+	addr1, err := ma.NewMultiaddr("/ip4/127.0.0.1/tcp/8001")
+	if err != nil {
+		panic(err)
+	}
+
+	l1, err := tpt.Listen(addr1)
 	if err != nil {
 		panic(err)
 	}
 
 	log("listening at localhost:8002")
-	l2, err := net.Listen("tcp", "localhost:8002")
+	addr2, err := ma.NewMultiaddr("/ip4/127.0.0.1/tcp/8002")
+	if err != nil {
+		panic(err)
+	}
+
+	l2, err := tpt.Listen(addr2)
 	if err != nil {
 		panic(err)
 	}
@@ -43,15 +57,20 @@ func main() {
 		panic(err)
 	}
 
+	d, err := tpt.Dialer(nil)
+	if err != nil {
+		panic(err)
+	}
+
 	// ok, let's try some outgoing connections
 	log("dialing localhost:8001")
-	nc1, err := net.Dial("tcp", "localhost:8001")
+	nc1, err := d.Dial(addr1)
 	if err != nil {
 		panic(err)
 	}
 
 	log("dialing localhost:8002")
-	nc2, err := net.Dial("tcp", "localhost:8002")
+	nc2, err := d.Dial(addr2)
 	if err != nil {
 		panic(err)
 	}

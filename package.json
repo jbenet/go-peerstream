@@ -27,13 +27,13 @@
     },
     {
       "author": "multiformats",
-      "hash": "QmVCNGTyD4EkvNYaAp253uMQ9Rjsjy2oGMvcdJJUoVRfja",
+      "hash": "QmUBQv5su4z2zkkfEwShU22Vfq3bWRtD7bogYiSCeyjvEd",
       "name": "go-multiaddr-net",
       "version": "1.5.2"
     },
     {
       "author": "whyrusleeping",
-      "hash": "QmVpYwkpCJLSLpEY9tUbDQjCVdEVusgibpE9TopF5MPoSS",
+      "hash": "QmPRK7UtNyvAxMt7J1Y1Nwi8ERm7e5Bcv31zRgmEe9xhmo",
       "name": "go-libp2p-transport",
       "version": "2.2.4"
     }

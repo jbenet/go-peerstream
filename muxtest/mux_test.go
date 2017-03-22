@@ -3,9 +3,9 @@ package muxtest
 import (
 	"testing"
 
-	yamux "gx/ipfs/QmSHTSkxXGQgaHWz91oZV3CDy3hmKmDgpjbYRT6niACG4E/go-smux-yamux"
-	multistream "gx/ipfs/Qme8hbiTP4VNr1s7FxsfnnqrxbxPz3KPWtuGYeGbtFnhGC/go-smux-multistream"
-	spdy "gx/ipfs/QmfXgTygwsTPyUWPWTAeBK6cFtTdMqmeeqhyhcNMhRpT1g/go-smux-spdystream"
+	multistream "github.com/whyrusleeping/go-smux-multistream"
+	spdy "github.com/whyrusleeping/go-smux-spdystream"
+	yamux "github.com/whyrusleeping/go-smux-yamux"
 )
 
 func TestYamuxTransport(t *testing.T) {
