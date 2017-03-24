@@ -16,6 +16,9 @@ import (
 // node to consume all its resources accepting new connections.
 var AcceptConcurrency = 200
 
+// Listener wraps a libp2p-transport Listener and a Swarm and a
+// group set. Listener is returned by Swarm.AddListener() and provides
+// its purpose is to be able to associate Swarm/Listener pairs to groups.
 type Listener struct {
 	netList tpt.Listener
 	groups  groupSet
@@ -32,6 +35,8 @@ func newListener(nl tpt.Listener, s *Swarm) *Listener {
 	}
 }
 
+// NetListener returns the libp2p-transport Listener wrapped
+// in Listener.
 func (l *Listener) NetListener() tpt.Listener {
 	return l.netList
 }
@@ -117,7 +122,8 @@ func (l *Listener) accept() {
 	}
 }
 
-// AcceptError returns the error that we **might** on listener close
+// AcceptErrors returns a channel for the errors
+// that we **might** get on listener close.
 func (l *Listener) AcceptErrors() <-chan error {
 	return l.acceptErr
 }
@@ -135,6 +141,7 @@ func (l *Listener) teardown() {
 	l.swarm.listenerLock.Unlock()
 }
 
+// Close closes the underlying libp2p-transport Listener.
 func (l *Listener) Close() error {
 	return l.netList.Close()
 }

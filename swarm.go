@@ -16,6 +16,10 @@ type fd uint32
 // GarbageCollectTimeout governs the periodic connection closer.
 var GarbageCollectTimeout = 5 * time.Second
 
+// Swarm represents a group of streams, connections and listeners which
+// are interconnected using a multiplexed transport.
+// Swarms keep track of user-added handlers which
+// define the actions upon the arrival of new streams and handlers.
 type Swarm struct {
 	// the transport we'll use.
 	transport smux.Transport
@@ -46,6 +50,7 @@ type Swarm struct {
 	closed chan struct{}
 }
 
+// NewSwarm creates a new swarm with the given multiplexed transport.
 func NewSwarm(t smux.Transport) *Swarm {
 	s := &Swarm{
 		transport:     t,
@@ -85,19 +90,19 @@ func (s *Swarm) Dump() string {
 	str := s.String() + "\n"
 
 	s.listenerLock.Lock()
-	for l, _ := range s.listeners {
+	for l := range s.listeners {
 		str += fmt.Sprintf("\t%s %v\n", l, l.Groups())
 	}
 	s.listenerLock.Unlock()
 
 	s.connLock.Lock()
-	for c, _ := range s.conns {
+	for c := range s.conns {
 		str += fmt.Sprintf("\t%s %v\n", c, c.Groups())
 	}
 	s.connLock.Unlock()
 
 	s.streamLock.Lock()
-	for ss, _ := range s.streams {
+	for ss := range s.streams {
 		str += fmt.Sprintf("\t%s %v\n", ss, ss.Groups())
 	}
 	s.streamLock.Unlock()
@@ -150,7 +155,7 @@ func (s *Swarm) ConnHandler() ConnHandler {
 	return s.connHandler
 }
 
-// SetConnSelect assigns the connection selector in the swarm.
+// SetSelectConn assigns the connection selector in the swarm.
 // If cs is nil, will use SelectRandomConn
 // This is a threadsafe (atomic) operation
 func (s *Swarm) SetSelectConn(cs SelectConn) {
@@ -159,8 +164,8 @@ func (s *Swarm) SetSelectConn(cs SelectConn) {
 	s.selectConn = cs
 }
 
-// ConnSelect returns the Swarm's current connection selector.
-// ConnSelect is used in order to select the best of a set of
+// SelectConn returns the Swarm's current connection selector.
+// SelectConn is used in order to select the best of a set of
 // possible connections. The default chooses one at random.
 // This is a threadsafe (atomic) operation
 func (s *Swarm) SelectConn() SelectConn {
@@ -217,8 +222,8 @@ func (s *Swarm) Streams() []*Stream {
 	return out
 }
 
-// AddListener adds net.Listener to the Swarm, and immediately begins
-// accepting incoming connections.
+// AddListener adds libp2p-transport Listener to the Swarm,
+// and immediately begins accepting incoming connections.
 func (s *Swarm) AddListener(l tpt.Listener) (*Listener, error) {
 	return s.addListener(l)
 }
@@ -254,7 +259,7 @@ func (s *Swarm) newStreamSelectConn(selConn SelectConn, conns []*Conn) (*Stream,
 	return s.NewStreamWithConn(best)
 }
 
-// NewStreamWithSelectConn opens a new Stream on a connection selected
+// NewStreamSelectConn opens a new Stream on a connection selected
 // by selConn.
 func (s *Swarm) NewStreamSelectConn(selConn SelectConn) (*Stream, error) {
 	if selConn == nil {
@@ -276,8 +281,8 @@ func (s *Swarm) NewStreamWithGroup(group Group) (*Stream, error) {
 	return s.newStreamSelectConn(s.SelectConn(), conns)
 }
 
-// NewStreamWithNetConn opens a new Stream on given net.Conn.
-// Calls s.AddConn(netConn).
+// NewStreamWithNetConn opens a new Stream on a given libp2p-transport Conn.
+// Calls s.AddConn(Conn).
 func (s *Swarm) NewStreamWithNetConn(netConn tpt.Conn) (*Stream, error) {
 	c, err := s.AddConn(netConn)
 	if err != nil {
@@ -286,7 +291,7 @@ func (s *Swarm) NewStreamWithNetConn(netConn tpt.Conn) (*Stream, error) {
 	return s.NewStreamWithConn(c)
 }
 
-// NewStreamWithConnection opens a new Stream on given connection.
+// NewStreamWithConn opens a new Stream on given Conn.
 func (s *Swarm) NewStreamWithConn(conn *Conn) (*Stream, error) {
 	if conn == nil {
 		return nil, errors.New("nil Conn")
