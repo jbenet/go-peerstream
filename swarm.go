@@ -45,7 +45,7 @@ type Swarm struct {
 
 	// notification listeners
 	notifiees    map[Notifiee]struct{}
-	notifieeLock sync.RWMutex
+	notifieeLock sync.Mutex
 
 	closed chan struct{}
 }
@@ -393,13 +393,19 @@ func (s *Swarm) StopNotify(n Notifiee) {
 
 // notifyAll runs the notification function on all Notifiees
 func (s *Swarm) notifyAll(notification func(n Notifiee)) {
-	s.notifieeLock.RLock()
+	s.notifieeLock.Lock()
+	var wg sync.WaitGroup
 	for n := range s.notifiees {
 		// make sure we dont block
 		// and they dont block each other.
-		go notification(n)
+		wg.Add(1)
+		go func(n Notifiee) {
+			defer wg.Done()
+			notification(n)
+		}(n)
 	}
-	s.notifieeLock.RUnlock()
+	wg.Wait()
+	s.notifieeLock.Unlock()
 }
 
 // Notifiee is an interface for an object wishing to receive
