@@ -3,17 +3,17 @@ package main
 import (
 	"fmt"
 	"io"
-	"net"
 	"os"
 
-	ps "github.com/jbenet/go-peerstream"
-	spdy "github.com/whyrusleeping/go-smux-spdystream"
+	ps "github.com/libp2p/go-peerstream"
+	tpt "github.com/libp2p/go-tcp-transport"
+	ma "github.com/multiformats/go-multiaddr"
+	yamux "github.com/whyrusleeping/go-smux-yamux"
 )
 
 func main() {
-
-	log("creating a new swarm with spdystream transport") // create a new Swarm
-	swarm := ps.NewSwarm(spdy.Transport)
+	log("creating a new swarm with Yamux transport") // create a new Swarm
+	swarm := ps.NewSwarm(yamux.DefaultTransport)
 	defer swarm.Close()
 
 	// tell swarm what to do with a new incoming streams.
@@ -22,14 +22,19 @@ func main() {
 	swarm.SetStreamHandler(ps.EchoHandler)
 
 	// Okay, let's try listening on some transports
-	log("listening at localhost:8001")
-	l1, err := net.Listen("tcp", "localhost:8001")
+	log("listening at localhost:12001")
+	addr, _ := ma.NewMultiaddr("/ip4/127.0.0.1/tcp/12001")
+	tr1 := tpt.NewTCPTransport()
+	l1, err := tr1.Listen(addr)
 	if err != nil {
 		panic(err)
 	}
 
-	log("listening at localhost:8002")
-	l2, err := net.Listen("tcp", "localhost:8002")
+	log("listening at localhost:12002")
+	addr2, _ := ma.NewMultiaddr("/ip4/127.0.0.1/tcp/12002")
+	tr2 := tpt.NewTCPTransport()
+	l2, err := tr2.Listen(addr2)
+
 	if err != nil {
 		panic(err)
 	}
@@ -44,14 +49,22 @@ func main() {
 	}
 
 	// ok, let's try some outgoing connections
-	log("dialing localhost:8001")
-	nc1, err := net.Dial("tcp", "localhost:8001")
+	log("dialing localhost:12001")
+	dlr1, err := tr1.Dialer(addr2)
+	if err != nil {
+		panic(err)
+	}
+	nc1, err := dlr1.Dial(addr)
 	if err != nil {
 		panic(err)
 	}
 
-	log("dialing localhost:8002")
-	nc2, err := net.Dial("tcp", "localhost:8002")
+	log("dialing localhost:12002")
+	dlr2, err := tr2.Dialer(addr)
+	if err != nil {
+		panic(err)
+	}
+	nc2, err := dlr2.Dial(addr2)
 	if err != nil {
 		panic(err)
 	}
@@ -68,7 +81,7 @@ func main() {
 
 	// Swarm treats listeners as sources of new connections and does
 	// not distinguish between outgoing or incoming connections.
-	// It provides the net.Conn to the StreamHandler so you can
+	// It provides the peerstream.Conn to the StreamHandler so you can
 	// distinguish between them however you wish.
 
 	// now let's try opening some streams!

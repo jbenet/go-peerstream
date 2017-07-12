@@ -3,10 +3,10 @@ package peerstream
 import (
 	"errors"
 	"fmt"
-	"net"
 	"sync"
 
-	tec "gx/ipfs/QmWHgLqrghM9zw77nF6gdvT9ExQ2RB9pLxkd8sDHZf1rWb/go-temp-err-catcher"
+	tec "github.com/jbenet/go-temp-err-catcher"
+	tpt "github.com/libp2p/go-libp2p-transport"
 )
 
 // AcceptConcurrency is how many connections can simultaneously be
@@ -16,15 +16,18 @@ import (
 // node to consume all its resources accepting new connections.
 var AcceptConcurrency = 200
 
+// Listener wraps a libp2p-transport Listener and a Swarm and a
+// group set. Listener is returned by Swarm.AddListener() and provides
+// its purpose is to be able to associate Swarm/Listener pairs to groups.
 type Listener struct {
-	netList net.Listener
+	netList tpt.Listener
 	groups  groupSet
 	swarm   *Swarm
 
 	acceptErr chan error
 }
 
-func newListener(nl net.Listener, s *Swarm) *Listener {
+func newListener(nl tpt.Listener, s *Swarm) *Listener {
 	return &Listener{
 		netList:   nl,
 		swarm:     s,
@@ -32,15 +35,16 @@ func newListener(nl net.Listener, s *Swarm) *Listener {
 	}
 }
 
+// NetListener returns the libp2p-transport Listener wrapped
+// in Listener.
+func (l *Listener) NetListener() tpt.Listener {
+	return l.netList
+}
+
 // String returns a string representation of the Listener
 func (l *Listener) String() string {
 	f := "<peerstream.Listener %s>"
 	return fmt.Sprintf(f, l.netList.Addr())
-}
-
-// NetListener is the underlying net.Listener
-func (l *Listener) NetListener() net.Listener {
-	return l.netList
 }
 
 // Groups returns the groups this Listener belongs to
@@ -104,7 +108,7 @@ func (l *Listener) accept() {
 		// note that this does not rate limit accepts.
 		limit <- struct{}{} // sema down
 		wg.Add(1)
-		go func(conn net.Conn) {
+		go func(conn tpt.Conn) {
 			defer func() { <-limit }() // sema up
 			defer wg.Done()
 
@@ -118,7 +122,8 @@ func (l *Listener) accept() {
 	}
 }
 
-// AcceptError returns the error that we **might** on listener close
+// AcceptErrors returns a channel for the errors
+// that we **might** get on listener close.
 func (l *Listener) AcceptErrors() <-chan error {
 	return l.acceptErr
 }
@@ -136,12 +141,13 @@ func (l *Listener) teardown() {
 	l.swarm.listenerLock.Unlock()
 }
 
+// Close closes the underlying libp2p-transport Listener.
 func (l *Listener) Close() error {
 	return l.netList.Close()
 }
 
 // addListener is the internal version of AddListener.
-func (s *Swarm) addListener(nl net.Listener) (*Listener, error) {
+func (s *Swarm) addListener(nl tpt.Listener) (*Listener, error) {
 	if nl == nil {
 		return nil, errors.New("nil listener")
 	}

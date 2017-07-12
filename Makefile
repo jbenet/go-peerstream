@@ -1,8 +1,8 @@
-test: deps
-	go test ./muxtest
+test: gx-bins
+	cd muxtest && gx install --global && gx-go rewrite && go test -v
 
 test_race: deps
-	go test -race ./muxtest
+	cd muxtest && gx install --global && gx-go rewrite && go test -race -v
 
 gx-bins:
 	go get github.com/whyrusleeping/gx
@@ -14,3 +14,4 @@ deps: gx-bins
 
 clean: gx-bins
 	gx-go rewrite --undo
+	cd muxtest && gx-go rewrite --undo

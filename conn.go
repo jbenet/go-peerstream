@@ -6,7 +6,8 @@ import (
 	"net"
 	"sync"
 
-	smux "gx/ipfs/Qmb1US8uyZeEpMyc56wVZy2cDFdQjNFojAUYVCoo9ieTqp/go-stream-muxer"
+	smux "github.com/jbenet/go-stream-muxer"
+	tpt "github.com/libp2p/go-libp2p-transport"
 )
 
 // ConnHandler is a function which receives a Conn. It allows
@@ -37,7 +38,7 @@ var ErrNoConnections = errors.New("no connections")
 // Conn is a Swarm-associated connection.
 type Conn struct {
 	smuxConn smux.Conn
-	netConn  net.Conn // underlying connection
+	netConn  tpt.Conn // underlying connection
 
 	swarm  *Swarm
 	groups groupSet
@@ -52,7 +53,7 @@ type Conn struct {
 	closingLock sync.Mutex
 }
 
-func newConn(nconn net.Conn, tconn smux.Conn, s *Swarm) *Conn {
+func newConn(nconn tpt.Conn, tconn smux.Conn, s *Swarm) *Conn {
 	return &Conn{
 		netConn:  nconn,
 		smuxConn: tconn,
@@ -62,7 +63,7 @@ func newConn(nconn net.Conn, tconn smux.Conn, s *Swarm) *Conn {
 	}
 }
 
-// String returns a string representation of the Conn
+// String returns a string representation of the Conn.
 func (c *Conn) String() string {
 	c.streamLock.RLock()
 	ls := len(c.streams)
@@ -71,12 +72,12 @@ func (c *Conn) String() string {
 	return fmt.Sprintf(f, ls, c.netConn.LocalAddr(), c.netConn.RemoteAddr())
 }
 
-// Swarm returns the Swarm associated with this Conn
+// Swarm returns the Swarm associated with this Conn.
 func (c *Conn) Swarm() *Swarm {
 	return c.swarm
 }
 
-// NetConn returns the underlying net.Conn
+// NetConn returns the underlying net.Conn.
 func (c *Conn) NetConn() net.Conn {
 	return c.netConn
 }
@@ -87,26 +88,27 @@ func (c *Conn) Conn() smux.Conn {
 	return c.smuxConn
 }
 
-// Groups returns the Groups this Conn belongs to
+// Groups returns the Groups this Conn belongs to.
 func (c *Conn) Groups() []Group {
 	return c.groups.Groups()
 }
 
-// InGroup returns whether this Conn belongs to a Group
+// InGroup returns whether this Conn belongs to a Group.
 func (c *Conn) InGroup(g Group) bool {
 	return c.groups.Has(g)
 }
 
-// AddGroup assigns given Group to Conn
+// AddGroup assigns given Group to Conn.
 func (c *Conn) AddGroup(g Group) {
 	c.groups.Add(g)
 }
 
-// Stream returns a stream associated with this Conn
+// NewStream returns a stream associated with this Conn.
 func (c *Conn) NewStream() (*Stream, error) {
 	return c.swarm.NewStreamWithConn(c)
 }
 
+// Streams returns the slice of all streams associated to this Conn.
 func (c *Conn) Streams() []*Stream {
 	c.streamLock.RLock()
 	defer c.streamLock.RUnlock()
@@ -176,6 +178,8 @@ func ConnsWithGroup(g Group, conns []*Conn) []*Conn {
 	return out
 }
 
+// ConnInConns returns true if a connection belongs to the
+// conns slice.
 func ConnInConns(c1 *Conn, conns []*Conn) bool {
 	for _, c2 := range conns {
 		if c2 == c1 {
@@ -193,7 +197,7 @@ func ConnInConns(c1 *Conn, conns []*Conn) bool {
 
 // addConn is the internal version of AddConn. we need the server bool
 // as spdystream requires it.
-func (s *Swarm) addConn(netConn net.Conn, isServer bool) (*Conn, error) {
+func (s *Swarm) addConn(netConn tpt.Conn, isServer bool) (*Conn, error) {
 	c, err := s.setupConn(netConn, isServer)
 	if err != nil {
 		return nil, err
@@ -218,7 +222,7 @@ func (s *Swarm) addConn(netConn net.Conn, isServer bool) (*Conn, error) {
 
 // setupConn adds the relevant connection to the map, first checking if it
 // was already there.
-func (s *Swarm) setupConn(netConn net.Conn, isServer bool) (*Conn, error) {
+func (s *Swarm) setupConn(netConn tpt.Conn, isServer bool) (*Conn, error) {
 	if netConn == nil {
 		return nil, errors.New("nil conn")
 	}
