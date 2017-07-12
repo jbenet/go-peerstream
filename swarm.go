@@ -409,7 +409,10 @@ func (s *Swarm) notifyAll(notification func(n Notifiee)) {
 }
 
 // Notifiee is an interface for an object wishing to receive
-// notifications from a Swarm
+// notifications from a Swarm. Notifiees should take care not to register other
+// notifiees inside of a notification.  They should also take care to do as
+// little work as possible within their notification, putting any blocking work
+// out into a goroutine.
 type Notifiee interface {
 	Connected(*Conn)      // called when a connection opened
 	Disconnected(*Conn)   // called when a connection closed
