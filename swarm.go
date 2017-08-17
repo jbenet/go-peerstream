@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	smux "github.com/jbenet/go-stream-muxer"
 	tpt "github.com/libp2p/go-libp2p-transport"
+	smux "github.com/libp2p/go-stream-muxer"
 )
 
 // fd is a (file) descriptor, unix style

@@ -14,7 +14,7 @@ import (
 
 	ps "github.com/libp2p/go-peerstream"
 
-	smux "github.com/jbenet/go-stream-muxer"
+	smux "github.com/libp2p/go-stream-muxer"
 	tcpc "github.com/libp2p/go-tcp-transport"
 	ma "github.com/multiformats/go-multiaddr"
 )
