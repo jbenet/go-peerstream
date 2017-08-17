@@ -26,6 +26,8 @@ type Stream struct {
 	protocol protocol.ID
 }
 
+var _ smux.Stream = &Stream{}
+
 func newStream(ss smux.Stream, c *Conn) *Stream {
 	s := &Stream{
 		conn:       c,
@@ -82,6 +84,11 @@ func (s *Stream) Read(p []byte) (n int, err error) {
 // of bytes written. It implements the io.Writer interface.
 func (s *Stream) Write(p []byte) (n int, err error) {
 	return s.smuxStream.Write(p)
+}
+
+// Reset resets the stream.
+func (s *Stream) Reset() error {
+	return s.smuxStream.Reset()
 }
 
 // Close closes the stream and removes it from the swarm.
