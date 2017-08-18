@@ -27,10 +27,10 @@ func EchoHandler(s *Stream) {
 	}()
 }
 
-// CloseHandler is a StreamHandler which simply closes
+// ResetHandler is a StreamHandler which simply resets
 // the stream.
-func CloseHandler(s *Stream) {
-	s.Close()
+func ResetHandler(s *Stream) {
+	s.Reset()
 }
 
 // NoOpStreamHandler is a StreamHandler which does nothing.

@@ -335,7 +335,7 @@ func (s *Swarm) Close() error {
 
 	// automatically close everything new we get.
 	s.SetConnHandler(func(c *Conn) { c.Close() })
-	s.SetStreamHandler(func(s *Stream) { s.Close() })
+	s.SetStreamHandler(func(s *Stream) { s.Reset() })
 
 	var wgl sync.WaitGroup
 	for _, l := range s.Listeners() {
