@@ -86,14 +86,14 @@ func (s *Stream) Write(p []byte) (n int, err error) {
 	return s.smuxStream.Write(p)
 }
 
-// Reset resets the stream.
+// Reset resets the stream and removes it from the swarm.
 func (s *Stream) Reset() error {
-	return s.smuxStream.Reset()
+	return s.conn.swarm.removeStream(s)
 }
 
-// Close closes the stream and removes it from the swarm.
+// Close closes the write end of the stream.
 func (s *Stream) Close() error {
-	return s.conn.swarm.removeStream(s)
+	return s.smuxStream.Close()
 }
 
 // Protocol returns the protocol identifier associated to this Stream.
