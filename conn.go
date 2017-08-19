@@ -207,11 +207,18 @@ func (s *Swarm) addConn(netConn tpt.Conn, isServer bool) (*Conn, error) {
 
 	if c.smuxConn != nil {
 		// go listen for incoming streams on this connection
-		go c.smuxConn.Serve(func(ss smux.Stream) {
-			// log.Printf("accepted stream %d from %s\n", ssS.Identifier(), netConn.RemoteAddr())
-			stream := s.setupStream(ss, c)
-			s.StreamHandler()(stream) // call our handler
-		})
+		go func() {
+			for {
+				str, err := c.smuxConn.AcceptStream()
+				if err != nil {
+					break
+				}
+				go func() {
+					stream := s.setupStream(str, c)
+					s.StreamHandler()(stream) // call our handler
+				}()
+			}
+		}()
 	}
 
 	s.notifyAll(func(n Notifiee) {
