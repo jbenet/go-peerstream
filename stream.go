@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	smux "github.com/jbenet/go-stream-muxer"
 	protocol "github.com/libp2p/go-libp2p-protocol"
+	smux "github.com/libp2p/go-stream-muxer"
 )
 
 // StreamHandler is a function which receives a Stream. It
@@ -25,6 +25,8 @@ type Stream struct {
 	groups   groupSet
 	protocol protocol.ID
 }
+
+var _ smux.Stream = &Stream{}
 
 func newStream(ss smux.Stream, c *Conn) *Stream {
 	s := &Stream{
@@ -84,9 +86,14 @@ func (s *Stream) Write(p []byte) (n int, err error) {
 	return s.smuxStream.Write(p)
 }
 
-// Close closes the stream and removes it from the swarm.
-func (s *Stream) Close() error {
+// Reset resets the stream and removes it from the swarm.
+func (s *Stream) Reset() error {
 	return s.conn.swarm.removeStream(s)
+}
+
+// Close closes the write end of the stream.
+func (s *Stream) Close() error {
+	return s.smuxStream.Close()
 }
 
 // Protocol returns the protocol identifier associated to this Stream.

@@ -6,8 +6,8 @@ import (
 	"net"
 	"sync"
 
-	smux "github.com/jbenet/go-stream-muxer"
 	tpt "github.com/libp2p/go-libp2p-transport"
+	smux "github.com/libp2p/go-stream-muxer"
 )
 
 // ConnHandler is a function which receives a Conn. It allows
@@ -147,10 +147,10 @@ func (c *Conn) Close() error {
 
 	c.closed = true
 
-	// close streams
+	// reset streams
 	streams := c.Streams()
 	for _, s := range streams {
-		s.Close()
+		s.Reset()
 	}
 
 	// close underlying connection
@@ -207,11 +207,18 @@ func (s *Swarm) addConn(netConn tpt.Conn, isServer bool) (*Conn, error) {
 
 	if c.smuxConn != nil {
 		// go listen for incoming streams on this connection
-		go c.smuxConn.Serve(func(ss smux.Stream) {
-			// log.Printf("accepted stream %d from %s\n", ssS.Identifier(), netConn.RemoteAddr())
-			stream := s.setupStream(ss, c)
-			s.StreamHandler()(stream) // call our handler
-		})
+		go func() {
+			for {
+				str, err := c.smuxConn.AcceptStream()
+				if err != nil {
+					break
+				}
+				go func() {
+					stream := s.setupStream(str, c)
+					s.StreamHandler()(stream) // call our handler
+				}()
+			}
+		}()
 	}
 
 	s.notifyAll(func(n Notifiee) {
@@ -302,6 +309,11 @@ func (s *Swarm) setupStream(smuxStream smux.Stream, c *Conn) *Stream {
 	return stream
 }
 
+// TODO: Really, we need to either not track them here or, possibly, add a
+// notification system to go-stream-muxer (shudder).
+// Alternatively, we could garbage collect them like we do connections but then
+// we'd need a way to determine which connections are open (we'd need IsClosed)
+// methods.
 func (s *Swarm) removeStream(stream *Stream) error {
 
 	// remove from our maps
@@ -312,7 +324,9 @@ func (s *Swarm) removeStream(stream *Stream) error {
 	s.streamLock.Unlock()
 	stream.conn.streamLock.Unlock()
 
-	err := stream.smuxStream.Close()
+	err := stream.smuxStream.Reset()
+	// TODO: Does this even make sense with half-open streams?
+	// TODO: This will fire once per call to Reset (possibly multiple times...)
 	s.notifyAll(func(n Notifiee) {
 		n.ClosedStream(stream)
 	})

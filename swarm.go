@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	smux "github.com/jbenet/go-stream-muxer"
 	tpt "github.com/libp2p/go-libp2p-transport"
+	smux "github.com/libp2p/go-stream-muxer"
 )
 
 // fd is a (file) descriptor, unix style
@@ -335,7 +335,7 @@ func (s *Swarm) Close() error {
 
 	// automatically close everything new we get.
 	s.SetConnHandler(func(c *Conn) { c.Close() })
-	s.SetStreamHandler(func(s *Stream) { s.Close() })
+	s.SetStreamHandler(func(s *Stream) { s.Reset() })
 
 	var wgl sync.WaitGroup
 	for _, l := range s.Listeners() {

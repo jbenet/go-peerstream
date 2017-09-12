@@ -9,9 +9,9 @@
   "gxDependencies": [
     {
       "author": "whyrusleeping",
-      "hash": "QmeZBgYBHvxMukGK5ojg28BCNLB9SeXqT7XXg6o7r2GbJy",
+      "hash": "QmY9JXR3FupnYAYJWK9aMr9bCpqWKcToQ1tz8DVGTrHpHw",
       "name": "go-stream-muxer",
-      "version": "1.1.0"
+      "version": "3.0.0"
     },
     {
       "author": "whyrusleeping",
@@ -49,6 +49,6 @@
   "license": "MIT",
   "name": "go-peerstream",
   "releaseCmd": "git commit -a -m \"gx release $VERSION\"",
-  "version": "1.7.0"
+  "version": "2.0.0"
 }
 
