@@ -36,6 +36,12 @@
       "hash": "QmTPm4fmjZtMngaxaGVa8wq9ZzJ2oAsT1DNgCCXJboZPi5",
       "name": "go-tcp-transport",
       "version": "1.1.7"
+    },
+    {
+      "author": "whyrusleeping",
+      "hash": "QmeZBgYBHvxMukGK5ojg28BCNLB9SeXqT7XXg6o7r2GbJy",
+      "name": "go-stream-muxer",
+      "version": "1.1.0"
     }
   ],
   "gxVersion": "0.7.0",
