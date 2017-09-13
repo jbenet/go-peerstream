@@ -88,12 +88,16 @@ func (s *Stream) Write(p []byte) (n int, err error) {
 
 // Reset resets the stream and removes it from the swarm.
 func (s *Stream) Reset() error {
-	return s.conn.swarm.removeStream(s)
+	return s.conn.swarm.removeStream(s, true)
 }
 
 // Close closes the write end of the stream.
+// NOTE: This currently removes the stream from the swarm as well. We shouldn't
+// do this but not doing this will result in bad memory leaks so we're punting
+// for now until we have some way to know when a stream has been closed by the
+// remote side.
 func (s *Stream) Close() error {
-	return s.smuxStream.Close()
+	return s.conn.swarm.removeStream(s, false)
 }
 
 // Protocol returns the protocol identifier associated to this Stream.

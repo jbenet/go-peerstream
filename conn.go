@@ -314,22 +314,29 @@ func (s *Swarm) setupStream(smuxStream smux.Stream, c *Conn) *Stream {
 // Alternatively, we could garbage collect them like we do connections but then
 // we'd need a way to determine which connections are open (we'd need IsClosed)
 // methods.
-func (s *Swarm) removeStream(stream *Stream) error {
-
+func (s *Swarm) removeStream(stream *Stream, reset bool) error {
 	// remove from our maps
 	s.streamLock.Lock()
-	stream.conn.streamLock.Lock()
-	delete(s.streams, stream)
-	delete(stream.conn.streams, stream)
+	_, isClosed := s.streams[stream]
+	if !isClosed {
+		stream.conn.streamLock.Lock()
+		delete(s.streams, stream)
+		delete(stream.conn.streams, stream)
+		stream.conn.streamLock.Unlock()
+	}
 	s.streamLock.Unlock()
-	stream.conn.streamLock.Unlock()
 
-	err := stream.smuxStream.Reset()
-	// TODO: Does this even make sense with half-open streams?
-	// TODO: This will fire once per call to Reset (possibly multiple times...)
-	s.notifyAll(func(n Notifiee) {
-		n.ClosedStream(stream)
-	})
+	var err error
+	if reset {
+		err = stream.smuxStream.Reset()
+	} else {
+		err = stream.smuxStream.Close()
+	}
+	if !isClosed {
+		s.notifyAll(func(n Notifiee) {
+			n.ClosedStream(stream)
+		})
+	}
 	return err
 }
 
