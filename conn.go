@@ -317,8 +317,8 @@ func (s *Swarm) setupStream(smuxStream smux.Stream, c *Conn) *Stream {
 func (s *Swarm) removeStream(stream *Stream, reset bool) error {
 	// remove from our maps
 	s.streamLock.Lock()
-	_, isClosed := s.streams[stream]
-	if !isClosed {
+	_, isOpen := s.streams[stream]
+	if isOpen {
 		stream.conn.streamLock.Lock()
 		delete(s.streams, stream)
 		delete(stream.conn.streams, stream)
@@ -332,7 +332,7 @@ func (s *Swarm) removeStream(stream *Stream, reset bool) error {
 	} else {
 		err = stream.smuxStream.Close()
 	}
-	if !isClosed {
+	if isOpen {
 		s.notifyAll(func(n Notifiee) {
 			n.ClosedStream(stream)
 		})
