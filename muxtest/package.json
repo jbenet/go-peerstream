@@ -9,33 +9,39 @@
   "gxDependencies": [
     {
       "author": "whyrusleeping",
-      "hash": "QmZJM54H2j26QwmWAYaW24L8Hwo3ojrQmiGj3gBF9Quj8d",
-      "name": "go-smux-muxado",
-      "version": "1.0.0"
-    },
-    {
-      "author": "whyrusleeping",
-      "hash": "QmYaeRqthWTco7oQF4dztuqA94P8JF36gVjd2z2eEqKfrh",
-      "name": "go-smux-yamux",
-      "version": "1.1.0"
-    },
-    {
-      "author": "whyrusleeping",
-      "hash": "QmVcmcQE9eX4HQ8QwhVXpoHt3ennG7d299NDYFq9D1Uqa1",
+      "hash": "QmRVYfZ7tWNHPBzWiG6KWGzvT2hcGems8srihsQE29x1U5",
       "name": "go-smux-multistream",
-      "version": "1.0.0"
+      "version": "1.5.5"
     },
     {
       "author": "whyrusleeping",
-      "hash": "Qmao31fmDJxp9gY7YNqkN1i3kGaknL6XSzKtdC1VCU7Qj8",
-      "name": "go-smux-multiplex",
-      "version": "1.0.0"
-    },
-    {
-      "author": "whyrusleeping",
-      "hash": "QmWMKNLGkYJTZ4Tq3DQ8E9j86QaKvGjKgFzvLzGYXvW69Z",
+      "hash": "QmWUNsat6Jb19nC5CiJCDXepTkxjdxi3eZqeoB6mrmmaGu",
       "name": "go-smux-spdystream",
-      "version": "1.0.0"
+      "version": "1.2.0"
+    },
+    {
+      "author": "whyrusleeping",
+      "hash": "Qmbn7RYyWzBVXiUp9jZ1dA4VADHy9DtS7iZLwfhEUQvm3U",
+      "name": "go-smux-yamux",
+      "version": "1.2.0"
+    },
+    {
+      "author": "whyrusleeping",
+      "hash": "QmXGtG3B4ALpLm4WcaG7KRHSsUCsjKJ5vKyNcQRoJAPq1P",
+      "name": "go-peerstream",
+      "version": "1.6.0"
+    },
+    {
+      "author": "whyrusleeping",
+      "hash": "QmTPm4fmjZtMngaxaGVa8wq9ZzJ2oAsT1DNgCCXJboZPi5",
+      "name": "go-tcp-transport",
+      "version": "1.1.7"
+    },
+    {
+      "author": "whyrusleeping",
+      "hash": "QmeZBgYBHvxMukGK5ojg28BCNLB9SeXqT7XXg6o7r2GbJy",
+      "name": "go-stream-muxer",
+      "version": "1.1.0"
     }
   ],
   "gxVersion": "0.7.0",
@@ -44,3 +50,4 @@
   "name": "muxtest",
   "version": "0.0.0"
 }
+

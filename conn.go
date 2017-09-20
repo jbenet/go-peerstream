@@ -6,7 +6,8 @@ import (
 	"net"
 	"sync"
 
-	smux "gx/ipfs/Qmb1US8uyZeEpMyc56wVZy2cDFdQjNFojAUYVCoo9ieTqp/go-stream-muxer"
+	tpt "github.com/libp2p/go-libp2p-transport"
+	smux "github.com/libp2p/go-stream-muxer"
 )
 
 // ConnHandler is a function which receives a Conn. It allows
@@ -37,7 +38,7 @@ var ErrNoConnections = errors.New("no connections")
 // Conn is a Swarm-associated connection.
 type Conn struct {
 	smuxConn smux.Conn
-	netConn  net.Conn // underlying connection
+	netConn  tpt.Conn // underlying connection
 
 	swarm  *Swarm
 	groups groupSet
@@ -52,7 +53,7 @@ type Conn struct {
 	closingLock sync.Mutex
 }
 
-func newConn(nconn net.Conn, tconn smux.Conn, s *Swarm) *Conn {
+func newConn(nconn tpt.Conn, tconn smux.Conn, s *Swarm) *Conn {
 	return &Conn{
 		netConn:  nconn,
 		smuxConn: tconn,
@@ -62,7 +63,7 @@ func newConn(nconn net.Conn, tconn smux.Conn, s *Swarm) *Conn {
 	}
 }
 
-// String returns a string representation of the Conn
+// String returns a string representation of the Conn.
 func (c *Conn) String() string {
 	c.streamLock.RLock()
 	ls := len(c.streams)
@@ -71,12 +72,12 @@ func (c *Conn) String() string {
 	return fmt.Sprintf(f, ls, c.netConn.LocalAddr(), c.netConn.RemoteAddr())
 }
 
-// Swarm returns the Swarm associated with this Conn
+// Swarm returns the Swarm associated with this Conn.
 func (c *Conn) Swarm() *Swarm {
 	return c.swarm
 }
 
-// NetConn returns the underlying net.Conn
+// NetConn returns the underlying net.Conn.
 func (c *Conn) NetConn() net.Conn {
 	return c.netConn
 }
@@ -87,26 +88,27 @@ func (c *Conn) Conn() smux.Conn {
 	return c.smuxConn
 }
 
-// Groups returns the Groups this Conn belongs to
+// Groups returns the Groups this Conn belongs to.
 func (c *Conn) Groups() []Group {
 	return c.groups.Groups()
 }
 
-// InGroup returns whether this Conn belongs to a Group
+// InGroup returns whether this Conn belongs to a Group.
 func (c *Conn) InGroup(g Group) bool {
 	return c.groups.Has(g)
 }
 
-// AddGroup assigns given Group to Conn
+// AddGroup assigns given Group to Conn.
 func (c *Conn) AddGroup(g Group) {
 	c.groups.Add(g)
 }
 
-// Stream returns a stream associated with this Conn
+// NewStream returns a stream associated with this Conn.
 func (c *Conn) NewStream() (*Stream, error) {
 	return c.swarm.NewStreamWithConn(c)
 }
 
+// Streams returns the slice of all streams associated to this Conn.
 func (c *Conn) Streams() []*Stream {
 	c.streamLock.RLock()
 	defer c.streamLock.RUnlock()
@@ -145,10 +147,10 @@ func (c *Conn) Close() error {
 
 	c.closed = true
 
-	// close streams
+	// reset streams
 	streams := c.Streams()
 	for _, s := range streams {
-		s.Close()
+		s.Reset()
 	}
 
 	// close underlying connection
@@ -176,6 +178,8 @@ func ConnsWithGroup(g Group, conns []*Conn) []*Conn {
 	return out
 }
 
+// ConnInConns returns true if a connection belongs to the
+// conns slice.
 func ConnInConns(c1 *Conn, conns []*Conn) bool {
 	for _, c2 := range conns {
 		if c2 == c1 {
@@ -193,7 +197,7 @@ func ConnInConns(c1 *Conn, conns []*Conn) bool {
 
 // addConn is the internal version of AddConn. we need the server bool
 // as spdystream requires it.
-func (s *Swarm) addConn(netConn net.Conn, isServer bool) (*Conn, error) {
+func (s *Swarm) addConn(netConn tpt.Conn, isServer bool) (*Conn, error) {
 	c, err := s.setupConn(netConn, isServer)
 	if err != nil {
 		return nil, err
@@ -203,11 +207,18 @@ func (s *Swarm) addConn(netConn net.Conn, isServer bool) (*Conn, error) {
 
 	if c.smuxConn != nil {
 		// go listen for incoming streams on this connection
-		go c.smuxConn.Serve(func(ss smux.Stream) {
-			// log.Printf("accepted stream %d from %s\n", ssS.Identifier(), netConn.RemoteAddr())
-			stream := s.setupStream(ss, c)
-			s.StreamHandler()(stream) // call our handler
-		})
+		go func() {
+			for {
+				str, err := c.smuxConn.AcceptStream()
+				if err != nil {
+					break
+				}
+				go func() {
+					stream := s.setupStream(str, c)
+					s.StreamHandler()(stream) // call our handler
+				}()
+			}
+		}()
 	}
 
 	s.notifyAll(func(n Notifiee) {
@@ -218,7 +229,7 @@ func (s *Swarm) addConn(netConn net.Conn, isServer bool) (*Conn, error) {
 
 // setupConn adds the relevant connection to the map, first checking if it
 // was already there.
-func (s *Swarm) setupConn(netConn net.Conn, isServer bool) (*Conn, error) {
+func (s *Swarm) setupConn(netConn tpt.Conn, isServer bool) (*Conn, error) {
 	if netConn == nil {
 		return nil, errors.New("nil conn")
 	}
@@ -298,20 +309,34 @@ func (s *Swarm) setupStream(smuxStream smux.Stream, c *Conn) *Stream {
 	return stream
 }
 
-func (s *Swarm) removeStream(stream *Stream) error {
-
+// TODO: Really, we need to either not track them here or, possibly, add a
+// notification system to go-stream-muxer (shudder).
+// Alternatively, we could garbage collect them like we do connections but then
+// we'd need a way to determine which connections are open (we'd need IsClosed)
+// methods.
+func (s *Swarm) removeStream(stream *Stream, reset bool) error {
 	// remove from our maps
 	s.streamLock.Lock()
-	stream.conn.streamLock.Lock()
-	delete(s.streams, stream)
-	delete(stream.conn.streams, stream)
+	_, isOpen := s.streams[stream]
+	if isOpen {
+		stream.conn.streamLock.Lock()
+		delete(s.streams, stream)
+		delete(stream.conn.streams, stream)
+		stream.conn.streamLock.Unlock()
+	}
 	s.streamLock.Unlock()
-	stream.conn.streamLock.Unlock()
 
-	err := stream.smuxStream.Close()
-	s.notifyAll(func(n Notifiee) {
-		n.ClosedStream(stream)
-	})
+	var err error
+	if reset {
+		err = stream.smuxStream.Reset()
+	} else {
+		err = stream.smuxStream.Close()
+	}
+	if isOpen {
+		s.notifyAll(func(n Notifiee) {
+			n.ClosedStream(stream)
+		})
+	}
 	return err
 }
 
