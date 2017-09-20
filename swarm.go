@@ -200,6 +200,37 @@ func (s *Swarm) Conns() []*Conn {
 	return open
 }
 
+// TODO: the primary use of the above Conns method is to check if there is a
+// connection to a given peer. That is extremely wasteful in terms of cpu and
+// allocations. This method is optimized for that specific usecase without
+// restructuring much of how go-peerstream works. Realistically, we need to
+// refactor the s.conns field to be a map from peer.ID to *Conn, but this
+// should do for now.
+func (s *Swarm) ConnsWithGroup(g Group) []*Conn {
+	s.connLock.RLock()
+	conns := make([]*Conn, 0, 1)
+	for c := range s.conns {
+		if c.InGroup(g) {
+			conns = append(conns, c)
+		}
+	}
+	s.connLock.RUnlock()
+
+	for i := 0; i < len(conns); {
+		c := conns[i]
+		if c.smuxConn != nil && c.smuxConn.IsClosed() {
+			c.GoClose()
+			conns[i] = conns[len(conns)-1]
+			conns[len(conns)-1] = nil
+			conns = conns[:len(conns)-1]
+		} else {
+			i++
+		}
+	}
+
+	return conns
+}
+
 // Listeners returns all the listeners associated with this Swarm.
 func (s *Swarm) Listeners() []*Listener {
 	s.listenerLock.RLock()
@@ -317,11 +348,6 @@ func (s *Swarm) NewStreamWithConn(conn *Conn) (*Stream, error) {
 // AddConnToGroup assigns given Group to conn
 func (s *Swarm) AddConnToGroup(conn *Conn, g Group) {
 	conn.groups.Add(g)
-}
-
-// ConnsWithGroup returns all the connections with a given Group
-func (s *Swarm) ConnsWithGroup(g Group) []*Conn {
-	return ConnsWithGroup(g, s.Conns())
 }
 
 // StreamsWithGroup returns all the streams with a given Group
